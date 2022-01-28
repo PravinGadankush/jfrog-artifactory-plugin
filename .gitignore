@@ -1,0 +1,27 @@
+# Visual Studio
+.vscode
+.vs/
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+
+# JetBrains
+.idea
+
+# Build results
+[Dd]ebug/
+[Dd]ebugPublic/
+[Rr]elease/
+[Rr]eleases/
+x64/
+x86/
+build/
+bld/
+[Bb]in/
+[Oo]bj/
+[Oo]ut/
+target/
+
+# mac custom folder attribute file
+**/.DS_Store
