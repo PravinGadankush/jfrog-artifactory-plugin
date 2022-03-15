@@ -6,18 +6,19 @@ import org.artifactory.request.Request
 
 @Field ScaPlugin scaPlugin
 
-scanExistingPackages()
+scanExistingArtifacts()
 
-private void scanExistingPackages() {
-    log.warn("Initializing Security Plugin...")
+private void scanExistingArtifacts() {
+    log.info("Initializing Security Plugin...")
 
-    scaPlugin = new ScaPlugin(repositories)
+    File pluginsDirectory = ctx.artifactoryHome.pluginsDir
+    scaPlugin = new ScaPlugin(log, pluginsDirectory, repositories)
 
-    log.warn("Initialization of Security Plugin completed")
+    log.info("Initialization of Sca Security Plugin completed")
 }
 
 download {
-  beforeRemoteDownload { Request request, RepoPath repoPath ->
-      scaPlugin.beforeRemoteDownload(request, repoPath)
-  }
+    beforeDownload { Request request, RepoPath repoPath ->
+        scaPlugin.beforeDownload(repoPath)
+    }
 }
