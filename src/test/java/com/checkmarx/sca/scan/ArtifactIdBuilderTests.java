@@ -1,65 +1,154 @@
 package com.checkmarx.sca.scan;
 
+import com.checkmarx.sca.PackageManager;
+import com.checkmarx.sca.TestsInjector;
+import com.checkmarx.sca.configuration.PluginConfiguration;
+import com.google.inject.Guice;
+import com.google.inject.Injector;
 import org.artifactory.fs.FileLayoutInfo;
+import org.artifactory.repo.RepoPath;
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
-import static org.mockito.Mockito.when;
+import org.slf4j.Logger;
+
+import java.util.Properties;
+
+import static org.mockito.ArgumentMatchers.isA;
+import static org.mockito.Mockito.*;
+import static org.mockito.internal.verification.VerificationModeFactory.times;
 
 public class ArtifactIdBuilderTests {
+
+    private Injector _injector;
+    private Logger _logger;
+
+    @BeforeEach
+    public void beforeEach() {
+        _logger = Mockito.mock(Logger.class);
+        var configuration = new PluginConfiguration(new Properties());
+        var artifactChecker = Mockito.mock(ArtifactChecker.class);
+
+        var appInjector = new TestsInjector(_logger, artifactChecker, configuration);
+
+        _injector = Guice.createInjector(appInjector);
+    }
 
     @DisplayName("Get artifact id with success - NPM")
     @Test
     public void getNpmArtifactIdWithSuccess() {
 
-        var artifactIdBuilder = new ArtifactIdBuilder();
+        var artifactIdBuilder = _injector.getInstance(ArtifactIdBuilder.class);
         var fileLayoutInfo = Mockito.mock(FileLayoutInfo.class);
 
         when(fileLayoutInfo.getBaseRevision()).thenReturn("1.2.3");
         when(fileLayoutInfo.getModule()).thenReturn("test");
+        when(fileLayoutInfo.isValid()).thenReturn(true);
 
-        var id = artifactIdBuilder.getArtifactId(fileLayoutInfo, "NPM");
+        var repoPath = Mockito.mock(RepoPath.class);
+
+        var id = artifactIdBuilder.getArtifactId(fileLayoutInfo, repoPath, PackageManager.NPM);
 
         Assertions.assertEquals("test", id.Name);
         Assertions.assertEquals("1.2.3", id.Version);
-        Assertions.assertEquals("NPM", id.PackageType);
+        Assertions.assertEquals("npm", id.PackageType);
     }
 
     @DisplayName("Get artifact id with success - Maven")
     @Test
     public void getMavenArtifactIdWithSuccess() {
 
-        var artifactIdBuilder = new ArtifactIdBuilder();
+        var artifactIdBuilder = _injector.getInstance(ArtifactIdBuilder.class);
         var fileLayoutInfo = Mockito.mock(FileLayoutInfo.class);
 
         when(fileLayoutInfo.getBaseRevision()).thenReturn("1.2.3");
         when(fileLayoutInfo.getOrganization()).thenReturn("org");
         when(fileLayoutInfo.getModule()).thenReturn("test");
+        when(fileLayoutInfo.isValid()).thenReturn(true);
 
-        var id = artifactIdBuilder.getArtifactId(fileLayoutInfo, "MAVEN");
+        var repoPath = Mockito.mock(RepoPath.class);
+
+        var id = artifactIdBuilder.getArtifactId(fileLayoutInfo, repoPath, PackageManager.MAVEN);
 
         Assertions.assertEquals("org:test", id.Name);
         Assertions.assertEquals("1.2.3", id.Version);
-        Assertions.assertEquals("MAVEN", id.PackageType);
+        Assertions.assertEquals("maven", id.PackageType);
     }
 
     @DisplayName("Get artifact id with success - Maven with file revision")
     @Test
     public void getMavenArtifactIdWithSuccessWithFileRevision() {
 
-        var artifactIdBuilder = new ArtifactIdBuilder();
+        var artifactIdBuilder = _injector.getInstance(ArtifactIdBuilder.class);
         var fileLayoutInfo = Mockito.mock(FileLayoutInfo.class);
 
         when(fileLayoutInfo.getBaseRevision()).thenReturn("1.2.3");
         when(fileLayoutInfo.getOrganization()).thenReturn("org");
         when(fileLayoutInfo.getFileIntegrationRevision()).thenReturn("2");
         when(fileLayoutInfo.getModule()).thenReturn("test");
+        when(fileLayoutInfo.isValid()).thenReturn(true);
 
-        var id = artifactIdBuilder.getArtifactId(fileLayoutInfo, "MAVEN");
+        var repoPath = Mockito.mock(RepoPath.class);
+
+        var id = artifactIdBuilder.getArtifactId(fileLayoutInfo, repoPath, PackageManager.MAVEN);
 
         Assertions.assertEquals("org:test", id.Name);
         Assertions.assertEquals("1.2.3-2", id.Version);
-        Assertions.assertEquals("MAVEN", id.PackageType);
+        Assertions.assertEquals("maven", id.PackageType);
+    }
+
+    @DisplayName("Get artifact id with success - Python")
+    @Test
+    public void getPythonArtifactIdWithSuccess() {
+
+        var artifactIdBuilder = _injector.getInstance(ArtifactIdBuilder.class);
+        var fileLayoutInfo = Mockito.mock(FileLayoutInfo.class);
+
+        var repoPath = Mockito.mock(RepoPath.class);
+        when(repoPath.getPath()).thenReturn("pip-remote-cache/51/bd/23c926cd341ea6b7dd0b2a00aba99ae0f828be89d72b2190f27c11d4b7fb/requests-2.22.0-py2.py3-none-any.whl");
+
+        var id = artifactIdBuilder.getArtifactId(fileLayoutInfo, repoPath, PackageManager.PYPI);
+
+        Assertions.assertEquals("requests", id.Name);
+        Assertions.assertEquals("2.22.0", id.Version);
+        Assertions.assertEquals("python", id.PackageType);
+    }
+
+    @DisplayName("Get artifact id with success - Nuget")
+    @Test
+    public void getNugetArtifactIdWithSuccess() {
+
+        var artifactIdBuilder = _injector.getInstance(ArtifactIdBuilder.class);
+        var fileLayoutInfo = Mockito.mock(FileLayoutInfo.class);
+
+        var repoPath = Mockito.mock(RepoPath.class);
+        when(repoPath.getPath()).thenReturn("dbup-core.4.5.0.nupkg");
+
+        var id = artifactIdBuilder.getArtifactId(fileLayoutInfo, repoPath, PackageManager.NUGET);
+
+        Assertions.assertEquals("dbup-core", id.Name);
+        Assertions.assertEquals("4.5.0", id.Version);
+        Assertions.assertEquals("nuget", id.PackageType);
+    }
+
+    @DisplayName("Fail to get artifact id by regex")
+    @Test
+    public void failToGetArtifactIdByRegex() {
+
+        var artifactIdBuilder = _injector.getInstance(ArtifactIdBuilder.class);
+        var fileLayoutInfo = Mockito.mock(FileLayoutInfo.class);
+
+        var path = "path";
+        var repoPath = Mockito.mock(RepoPath.class);
+        when(repoPath.getName()).thenReturn("name");
+        when(repoPath.getPath()).thenReturn(path);
+
+        var packageManager = PackageManager.COCOAPODS;
+        var id = artifactIdBuilder.getArtifactId(fileLayoutInfo, repoPath, packageManager);
+
+        Mockito.verify(_logger, times(1)).info(Mockito.argThat(s -> s.contains(packageManager.packageType())));
+        Mockito.verify(_logger, times(1)).debug(Mockito.argThat(s -> s.contains(path)));
     }
 }

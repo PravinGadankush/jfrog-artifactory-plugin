@@ -3,10 +3,10 @@ package com.checkmarx.sca.configuration;
 import com.checkmarx.sca.TestsInjector;
 import com.checkmarx.sca.scan.ArtifactChecker;
 import com.google.inject.Guice;
-import org.artifactory.repo.Repositories;
 import org.junit.jupiter.api.*;
 import org.mockito.Mockito;
 import org.slf4j.Logger;
+
 import java.util.Properties;
 
 @DisplayName("PluginConfiguration")

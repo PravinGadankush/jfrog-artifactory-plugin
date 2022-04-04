@@ -9,9 +9,11 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import org.slf4j.Logger;
+
 import java.io.File;
 import java.io.IOException;
 import java.util.concurrent.ExecutionException;
+
 import static java.lang.String.format;
 import static org.mockito.ArgumentMatchers.isA;
 import static org.mockito.Mockito.never;
@@ -35,6 +37,7 @@ public class ScaPluginTest {
         var fileLayoutInfo = Mockito.mock(FileLayoutInfo.class);
         when(fileLayoutInfo.getBaseRevision()).thenReturn(ArtifactVersion);
         when(fileLayoutInfo.getModule()).thenReturn(ArtifactName);
+        when(fileLayoutInfo.isValid()).thenReturn(true);
 
         var repoPath = Mockito.mock(RepoPath.class);
         when(repoPath.getRepoKey()).thenReturn(RepoKey);

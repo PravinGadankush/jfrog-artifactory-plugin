@@ -9,9 +9,11 @@ import com.google.inject.Injector;
 import org.artifactory.repo.RepoPath;
 import org.artifactory.repo.Repositories;
 import org.slf4j.Logger;
+
 import javax.annotation.Nonnull;
 import java.io.File;
 import java.io.IOException;
+
 import static java.lang.String.format;
 
 public class ScaPlugin
@@ -48,12 +50,8 @@ public class ScaPlugin
                 return;
             }
 
-            _logger.info(format("Started artifact verification. Artifact name: %s :", repoPath.getName()));
-
             var artifactChecker = _injector.getInstance(ArtifactChecker.class);
             artifactChecker.checkArtifact(repoPath);
-
-            _logger.info(format("Ended the artifact verification. Artifact name: %s", repoPath.getName()));
         } catch (Exception ex) {
             _logger.error(format("SCA was unable to complete verification of: %s.\nException message: %s", repoPath.getName(), ex.getMessage()));
         }

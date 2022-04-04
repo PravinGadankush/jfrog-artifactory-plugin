@@ -1,7 +1,6 @@
 package com.checkmarx.sca.communication;
 
 import com.checkmarx.sca.TestsInjector;
-import com.checkmarx.sca.communication.exceptions.FailedToRefreshTokenException;
 import com.checkmarx.sca.communication.exceptions.UnexpectedResponseBodyException;
 import com.checkmarx.sca.communication.exceptions.UnexpectedResponseCodeException;
 import com.checkmarx.sca.communication.models.AuthenticationHeader;
@@ -12,12 +11,13 @@ import com.github.tomakehurst.wiremock.WireMockServer;
 import com.github.tomakehurst.wiremock.client.WireMock;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
-import org.artifactory.repo.Repositories;
 import org.junit.jupiter.api.*;
 import org.mockito.Mockito;
 import org.slf4j.Logger;
+
 import java.util.Properties;
 import java.util.concurrent.ExecutionException;
+
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
 
 @DisplayName("ScaHttpClient")

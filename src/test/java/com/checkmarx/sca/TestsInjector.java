@@ -5,7 +5,6 @@ import com.checkmarx.sca.communication.ScaHttpClient;
 import com.checkmarx.sca.configuration.PluginConfiguration;
 import com.checkmarx.sca.scan.ArtifactChecker;
 import com.google.inject.AbstractModule;
-import org.artifactory.repo.Repositories;
 import org.slf4j.Logger;
 
 import javax.annotation.Nonnull;

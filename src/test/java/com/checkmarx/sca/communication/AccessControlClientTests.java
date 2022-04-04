@@ -15,8 +15,11 @@ import com.google.inject.Injector;
 import org.junit.jupiter.api.*;
 import org.mockito.Mockito;
 import org.slf4j.Logger;
+
 import java.util.Properties;
-import static com.github.tomakehurst.wiremock.client.WireMock.*;
+
+import static com.github.tomakehurst.wiremock.client.WireMock.badRequest;
+import static com.github.tomakehurst.wiremock.client.WireMock.ok;
 import static com.github.tomakehurst.wiremock.stubbing.Scenario.STARTED;
 import static java.lang.String.format;
 import static org.mockito.internal.verification.VerificationModeFactory.times;

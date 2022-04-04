@@ -14,19 +14,24 @@ import com.google.inject.Guice;
 import com.google.inject.Injector;
 import org.artifactory.fs.FileLayoutInfo;
 import org.artifactory.repo.*;
-import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
 import org.mockito.Mockito;
 import org.slf4j.Logger;
+
 import java.lang.reflect.Type;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
 import java.util.concurrent.ExecutionException;
+
 import static java.lang.String.format;
 import static org.mockito.ArgumentMatchers.isA;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.when;
 import static org.mockito.internal.verification.VerificationModeFactory.times;
 
 public class ArtifactCheckerTests {
@@ -49,6 +54,7 @@ public class ArtifactCheckerTests {
         _mainRepoPath = Mockito.mock(RepoPath.class);
         when(_mainRepoPath.getRepoKey()).thenReturn(RepoKey);
         when(_mainRepoPath.getName()).thenReturn(format("%s-%s", ArtifactName, ArtifactVersion));
+        when(_mainRepoPath.getPath()).thenReturn(format("%s-%s", ArtifactName, ArtifactVersion));
 
         _logger = Mockito.mock(Logger.class);
         _repositories = Mockito.mock(Repositories.class);
@@ -81,7 +87,7 @@ public class ArtifactCheckerTests {
 
         artifactChecker.checkArtifact(_mainRepoPath);
 
-        loggerNeverCalled();
+        withoutWarningsAndErrors();
         Mockito.verify(_repositories, times(8)).setProperty(isA(RepoPath.class), isA(String.class), isA(String.class));
     }
 
@@ -115,7 +121,7 @@ public class ArtifactCheckerTests {
             artifactChecker.checkArtifact(_mainRepoPath);
         }
 
-        loggerNeverCalled();
+        withoutWarningsAndErrors();
         Mockito.verify(_repositories, times(16)).setProperty(isA(RepoPath.class), isA(String.class), isA(String.class));
         Mockito.verify(_scaHttpClient, times(1)).getArtifactInformation(isA(String.class), isA(String.class), isA(String.class));
         Mockito.verify(_scaHttpClient, times(1)).getVulnerabilitiesForArtifact(isA(ArtifactId.class));
@@ -155,7 +161,7 @@ public class ArtifactCheckerTests {
             artifactChecker.checkArtifact(_mainRepoPath);
         }
 
-        loggerNeverCalled();
+        withoutWarningsAndErrors();
         Mockito.verify(_repositories, times(16)).setProperty(isA(RepoPath.class), isA(String.class), isA(String.class));
         Mockito.verify(_scaHttpClient, times(1)).getArtifactInformation(isA(String.class), isA(String.class), isA(String.class));
         Mockito.verify(_scaHttpClient, times(1)).getVulnerabilitiesForArtifact(isA(ArtifactId.class));
@@ -313,6 +319,7 @@ public class ArtifactCheckerTests {
         var fileLayoutInfo = Mockito.mock(FileLayoutInfo.class);
         when(fileLayoutInfo.getBaseRevision()).thenReturn(ArtifactVersion);
         when(fileLayoutInfo.getModule()).thenReturn(ArtifactName);
+        when(fileLayoutInfo.isValid()).thenReturn(true);
         return fileLayoutInfo;
     }
 
@@ -341,6 +348,17 @@ public class ArtifactCheckerTests {
 
     private void loggerNeverCalled(){
         Mockito.verify(_logger, never()).info(isA(String.class));
+        Mockito.verify(_logger, never()).info(Mockito.anyString(), isA(Exception.class));
+
+        Mockito.verify(_logger, never()).error(isA(String.class));
+        Mockito.verify(_logger, never()).error(isA(String.class), isA(Exception.class));
+
+        Mockito.verify(_logger, never()).warn(isA(String.class));
+        Mockito.verify(_logger, never()).warn(isA(String.class), isA(Exception.class));
+    }
+
+    private void withoutWarningsAndErrors(){
+        Mockito.verify(_logger, times(2)).info(isA(String.class));
         Mockito.verify(_logger, never()).info(Mockito.anyString(), isA(Exception.class));
 
         Mockito.verify(_logger, never()).error(isA(String.class));
