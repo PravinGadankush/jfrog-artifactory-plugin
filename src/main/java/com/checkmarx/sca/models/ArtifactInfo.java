@@ -57,4 +57,15 @@ public class ArtifactInfo {
     public ArtifactId getId() {
         return _id;
     }
+
+    public String getPackageType() {
+        return _type;
+    }
+    public String getName() {
+        return _name;
+    }
+    public String getVersion() {
+        return _version;
+    }
+
 }

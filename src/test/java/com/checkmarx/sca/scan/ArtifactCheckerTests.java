@@ -5,9 +5,8 @@ import com.checkmarx.sca.TestsInjector;
 import com.checkmarx.sca.communication.ScaHttpClient;
 import com.checkmarx.sca.communication.exceptions.UnexpectedResponseCodeException;
 import com.checkmarx.sca.configuration.PluginConfiguration;
-import com.checkmarx.sca.models.ArtifactId;
 import com.checkmarx.sca.models.ArtifactInfo;
-import com.checkmarx.sca.models.Vulnerability;
+import com.checkmarx.sca.models.PackageRiskAggregation;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import com.google.inject.Guice;
@@ -20,14 +19,11 @@ import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
 import org.mockito.Mockito;
 import org.slf4j.Logger;
-
 import java.lang.reflect.Type;
 import java.time.Instant;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
 import java.util.concurrent.ExecutionException;
-
 import static java.lang.String.format;
 import static org.mockito.ArgumentMatchers.isA;
 import static org.mockito.Mockito.never;
@@ -124,7 +120,7 @@ public class ArtifactCheckerTests {
         withoutWarningsAndErrors();
         Mockito.verify(_repositories, times(16)).setProperty(isA(RepoPath.class), isA(String.class), isA(String.class));
         Mockito.verify(_scaHttpClient, times(1)).getArtifactInformation(isA(String.class), isA(String.class), isA(String.class));
-        Mockito.verify(_scaHttpClient, times(1)).getVulnerabilitiesForArtifact(isA(ArtifactId.class));
+        Mockito.verify(_scaHttpClient, times(1)).getRiskAggregationOfArtifact(isA(String.class), isA(String.class), isA(String.class));
     }
 
     @DisplayName("Check artifact with success - virtual repository not ignored by one")
@@ -164,7 +160,7 @@ public class ArtifactCheckerTests {
         withoutWarningsAndErrors();
         Mockito.verify(_repositories, times(16)).setProperty(isA(RepoPath.class), isA(String.class), isA(String.class));
         Mockito.verify(_scaHttpClient, times(1)).getArtifactInformation(isA(String.class), isA(String.class), isA(String.class));
-        Mockito.verify(_scaHttpClient, times(1)).getVulnerabilitiesForArtifact(isA(ArtifactId.class));
+        Mockito.verify(_scaHttpClient, times(1)).getRiskAggregationOfArtifact(isA(String.class), isA(String.class), isA(String.class));
     }
 
     @DisplayName("Failed to check artifact - artifact not found")
@@ -192,7 +188,7 @@ public class ArtifactCheckerTests {
 
         Mockito.verify(_logger, times(1)).warn(Mockito.argThat(s -> s.contains("Artifact not found in any repository.")));
         Mockito.verify(_scaHttpClient, never()).getArtifactInformation(isA(String.class), isA(String.class), isA(String.class));
-        Mockito.verify(_scaHttpClient, never()).getVulnerabilitiesForArtifact(isA(ArtifactId.class));
+        Mockito.verify(_scaHttpClient, never()).getRiskAggregationOfArtifact(isA(String.class), isA(String.class), isA(String.class));
     }
 
     @DisplayName("Artifact verification ignored")
@@ -211,7 +207,7 @@ public class ArtifactCheckerTests {
 
         Mockito.verify(_logger, times(1)).info(Mockito.argThat(s -> s.contains("Scan ignored by cache configuration.")));
         Mockito.verify(_scaHttpClient, never()).getArtifactInformation(isA(String.class), isA(String.class), isA(String.class));
-        Mockito.verify(_scaHttpClient, never()).getVulnerabilitiesForArtifact(isA(ArtifactId.class));
+        Mockito.verify(_scaHttpClient, never()).getRiskAggregationOfArtifact(isA(String.class), isA(String.class), isA(String.class));
     }
 
     @DisplayName("Failed to check artifact - invalid artifact id")
@@ -233,7 +229,7 @@ public class ArtifactCheckerTests {
 
         Mockito.verify(_logger, times(1)).error(Mockito.argThat(s -> s.contains("The artifact id was not built correctly.")));
         Mockito.verify(_scaHttpClient, never()).getArtifactInformation(isA(String.class), isA(String.class), isA(String.class));
-        Mockito.verify(_scaHttpClient, never()).getVulnerabilitiesForArtifact(isA(ArtifactId.class));
+        Mockito.verify(_scaHttpClient, never()).getRiskAggregationOfArtifact(isA(String.class), isA(String.class), isA(String.class));
     }
 
     @DisplayName("Failed to check artifact - failed to get artifact info")
@@ -286,9 +282,9 @@ public class ArtifactCheckerTests {
         Mockito.verify(_repositories, never()).setProperty(isA(RepoPath.class), isA(String.class), isA(String.class));
     }
 
-    @DisplayName("Failed to check artifact - failed to get vulnerabilities")
+    @DisplayName("Failed to check artifact - failed to get artifact aggregation risk")
     @Test
-    public void failedToCheckArtifactFailedToGetVulnerabilities() throws ExecutionException, InterruptedException {
+    public void failedToCheckArtifactFailedToGetAggregationRisk() throws ExecutionException, InterruptedException {
 
         var fileLayoutInfo = CreateFileLayoutInfoMock();
 
@@ -304,7 +300,7 @@ public class ArtifactCheckerTests {
                 .thenReturn(artifactInfo);
 
         var exception = new UnexpectedResponseCodeException(404);
-        when(_scaHttpClient.getVulnerabilitiesForArtifact(artifactInfo.getId()))
+        when(_scaHttpClient.getRiskAggregationOfArtifact(artifactInfo.getPackageType(), artifactInfo.getName(), artifactInfo.getVersion()))
                 .thenThrow(exception);
 
         var artifactChecker = _injector.getInstance(ArtifactChecker.class);
@@ -329,8 +325,8 @@ public class ArtifactCheckerTests {
             when(_scaHttpClient.getArtifactInformation(ArtifactType, ArtifactName, ArtifactVersion))
                     .thenReturn(artifactInfo);
 
-            var vulnerabilities = CreateVulnerabilitiesList();
-            when(_scaHttpClient.getVulnerabilitiesForArtifact(artifactInfo.getId()))
+            var vulnerabilities = CreatePackageRiskAggregation();
+            when(_scaHttpClient.getRiskAggregationOfArtifact(artifactInfo.getPackageType(), artifactInfo.getName(), artifactInfo.getVersion()))
                     .thenReturn(vulnerabilities);
         } catch (Exception e) {
             e.printStackTrace();
@@ -341,20 +337,10 @@ public class ArtifactCheckerTests {
         return new Gson().fromJson("{\"id\":{\"identifier\":\"Npm-lodash-0.2.1\"},\"name\":\"lodash\",\"version\":\"0.2.1\",\"type\":\"Npm\",\"releaseDate\":\"2012-05-24T21:53:08\",\"description\":\"A drop-in replacement for Underscore.js that delivers performance improvements, bug fixes, and additional features.\",\"repositoryUrl\":\"git://github.com/bestiejs/lodash.git\",\"binaryUrl\":\"https://registry.npmjs.org/lodash/-/lodash-0.2.1.tgz\",\"projectUrl\":\"\",\"bugsUrl\":null,\"sourceUrl\":\"\",\"projectHomePage\":\"http://lodash.com\",\"homePage\":\"\",\"license\":\"\",\"summary\":\"\",\"url\":\"\",\"owner\":\"\"}", ArtifactInfo.class);
     }
 
-    private ArrayList<Vulnerability> CreateVulnerabilitiesList(){
-        Type listType = new TypeToken<ArrayList<Vulnerability>>(){}.getType();
-        return new Gson().fromJson("[{\"id\":\"CVE-2020-28500\",\"cwe\":\"CWE-400\",\"description\":\"Lodash before 4.17.21 is vulnerable to Regular Expression Denial of Service (ReDoS) via the toNumber, trim and trimEnd functions.\",\"vulnerabilityType\":\"Regular\",\"publishDate\":\"2021-02-15T11:15:00\",\"score\":5.3,\"severity\":\"Medium\",\"created\":\"2021-03-04T08:29:31\",\"cveName\":\"CVE-2020-28500\",\"updateTime\":\"2022-01-07T06:04:48\"}]", listType);
-    }
+    private PackageRiskAggregation CreatePackageRiskAggregation(){
+        Type listType = new TypeToken<PackageRiskAggregation>(){}.getType();
 
-    private void loggerNeverCalled(){
-        Mockito.verify(_logger, never()).info(isA(String.class));
-        Mockito.verify(_logger, never()).info(Mockito.anyString(), isA(Exception.class));
-
-        Mockito.verify(_logger, never()).error(isA(String.class));
-        Mockito.verify(_logger, never()).error(isA(String.class), isA(Exception.class));
-
-        Mockito.verify(_logger, never()).warn(isA(String.class));
-        Mockito.verify(_logger, never()).warn(isA(String.class), isA(Exception.class));
+        return new Gson().fromJson("{\"packageVulnerabilitiesAggregation\":{\"vulnerabilitiesCount\":159,\"maxRiskSeverity\":\"High\",\"maxRiskScore\":9.8,\"highRiskCount\":151,\"mediumRiskCount\":8,\"lowRiskCount\":0}}", listType);
     }
 
     private void withoutWarningsAndErrors(){

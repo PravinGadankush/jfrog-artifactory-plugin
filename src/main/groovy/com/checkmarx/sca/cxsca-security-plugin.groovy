@@ -14,6 +14,10 @@ private void scanExistingArtifacts() {
     File pluginsDirectory = ctx.artifactoryHome.pluginsDir
     scaPlugin = new ScaPlugin(log, pluginsDirectory, repositories)
 
+    searches.artifactsByName('*').each { artifact ->
+        scaPlugin.beforeDownload(artifact)
+    }
+
     log.info("Initialization of Sca Security Plugin completed")
 }
 

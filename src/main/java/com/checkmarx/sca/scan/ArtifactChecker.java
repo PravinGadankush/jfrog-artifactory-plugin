@@ -9,7 +9,7 @@ import com.checkmarx.sca.configuration.ConfigurationEntry;
 import com.checkmarx.sca.configuration.PluginConfiguration;
 import com.checkmarx.sca.models.ArtifactId;
 import com.checkmarx.sca.models.ArtifactInfo;
-import com.checkmarx.sca.models.Vulnerability;
+import com.checkmarx.sca.models.PackageRiskAggregation;
 import com.google.inject.Inject;
 import org.artifactory.repo.*;
 import org.slf4j.Logger;
@@ -148,7 +148,8 @@ public class ArtifactChecker {
 
     private boolean FileShouldBeIgnored(RepoPath repoPath, IPackageManager packageManager) {
         var notNugetPackage = packageManager == PackageManager.NUGET && !repoPath.getPath().endsWith(".nupkg");
-        return notNugetPackage;
+        var jsonFile = repoPath.getPath().endsWith(".json");
+        return notNugetPackage || jsonFile;
     }
 
     private void setProperties(@Nonnull ArrayList<RepoPath> repoPaths, @Nonnull ArtifactId artifactId) {
@@ -168,8 +169,8 @@ public class ArtifactChecker {
         }
 
         try {
-            var vulnerabilities = _scaHttpClient.getVulnerabilitiesForArtifact(artifactInfo.getId());
-            addArtifactVulnerabilitiesInfo(repoPaths, vulnerabilities);
+            var packageRiskAggregation = _scaHttpClient.getRiskAggregationOfArtifact(artifactInfo.getPackageType(), artifactInfo.getName(), artifactInfo.getVersion());
+            addArtifactRiskInfo(repoPaths, packageRiskAggregation);
         } catch (Exception ex) {
             _logger.error(format("Failed to get vulnerabilities of artifact. Exception Message: %s. Artifact Name: %s.", ex.getMessage(), artifactId.Name));
         }
@@ -185,62 +186,26 @@ public class ArtifactChecker {
         }
     }
 
-    private void addArtifactVulnerabilitiesInfo(@Nonnull ArrayList<RepoPath> repoPaths, @Nonnull ArrayList<Vulnerability> vulnerabilities) {
+    private void addArtifactRiskInfo(@Nonnull ArrayList<RepoPath> repoPaths, @Nonnull PackageRiskAggregation packageRiskAggregation) {
         for (var repoPath : repoPaths) {
             try{
-                addArtifactVulnerabilitiesInfo(repoPath, vulnerabilities);
+                addArtifactRiskInfo(repoPath, packageRiskAggregation);
             } catch (Exception ex) {
                 _logger.error(format("Failed to add vulnerabilities info to the properties. Exception Message: %s. Artifact Name: %s.", ex.getMessage(), repoPath.getName()));
             }
         }
     }
 
-    private void addArtifactVulnerabilitiesInfo(RepoPath repoPath, ArrayList<Vulnerability> vulnerabilities) {
+    private void addArtifactRiskInfo(RepoPath repoPath, PackageRiskAggregation packageRiskAggregation) {
 
-        var totalNumberOfVulnerabilities = vulnerabilities.size();
-        var totalLowScoreVulnerabilities = 0;
-        var totalMediumScoreVulnerabilities = 0;
-        var totalHighScoreVulnerabilities = 0;
-        var vulnerabilityLevel = "None";
-        var vulnerabilityScore = 0.0;
+        var vulnerabilitiesAggregation = packageRiskAggregation.getVulnerabilitiesAggregation();
 
-        for (Vulnerability vulnerability : vulnerabilities) {
-
-            switch (vulnerability.getSeverity()) {
-                case "Low":
-                    if (vulnerabilityLevel == "None") {
-                        vulnerabilityLevel = vulnerability.getSeverity();
-                    }
-
-                    totalLowScoreVulnerabilities++;
-                    break;
-                case "Medium":
-                    if (vulnerabilityLevel == "None" || vulnerabilityLevel == "Low") {
-                        vulnerabilityLevel = vulnerability.getSeverity();
-                    }
-
-                    totalMediumScoreVulnerabilities++;
-                    break;
-                case "High":
-                    if (vulnerabilityLevel == "None" || vulnerabilityLevel == "Low" || vulnerabilityLevel == "Medium") {
-                        vulnerabilityLevel = vulnerability.getSeverity();
-                    }
-
-                    totalHighScoreVulnerabilities++;
-                    break;
-            }
-
-            if (vulnerability.getScore() > vulnerabilityScore) {
-                vulnerabilityScore = vulnerability.getScore();
-            }
-        }
-
-        _repositories.setProperty(repoPath, PropertiesConstants.VULNERABILITIES_COUNT, String.valueOf(totalNumberOfVulnerabilities));
-        _repositories.setProperty(repoPath, PropertiesConstants.LOW_VULNERABILITIES_COUNT, String.valueOf(totalLowScoreVulnerabilities));
-        _repositories.setProperty(repoPath, PropertiesConstants.MEDIUM_VULNERABILITIES_COUNT, String.valueOf(totalMediumScoreVulnerabilities));
-        _repositories.setProperty(repoPath, PropertiesConstants.HIGH_VULNERABILITIES_COUNT, String.valueOf(totalHighScoreVulnerabilities));
-        _repositories.setProperty(repoPath, PropertiesConstants.VULNERABILITY_SCORE, String.valueOf(vulnerabilityScore));
-        _repositories.setProperty(repoPath, PropertiesConstants.VULNERABILITY_LEVEL, vulnerabilityLevel);
+        _repositories.setProperty(repoPath, PropertiesConstants.VULNERABILITIES_COUNT, String.valueOf(vulnerabilitiesAggregation.getVulnerabilitiesCount()));
+        _repositories.setProperty(repoPath, PropertiesConstants.LOW_VULNERABILITIES_COUNT, String.valueOf(vulnerabilitiesAggregation.getLowRiskCount()));
+        _repositories.setProperty(repoPath, PropertiesConstants.MEDIUM_VULNERABILITIES_COUNT, String.valueOf(vulnerabilitiesAggregation.getMediumRiskCount()));
+        _repositories.setProperty(repoPath, PropertiesConstants.HIGH_VULNERABILITIES_COUNT, String.valueOf(vulnerabilitiesAggregation.getHighRiskCount()));
+        _repositories.setProperty(repoPath, PropertiesConstants.VULNERABILITY_SCORE, String.valueOf(vulnerabilitiesAggregation.getHighRiskCount()));
+        _repositories.setProperty(repoPath, PropertiesConstants.VULNERABILITY_LEVEL, vulnerabilitiesAggregation.getMaxRiskSeverity());
         _repositories.setProperty(repoPath, PropertiesConstants.SCAN_DATE, Instant.now().toString());
     }
 }

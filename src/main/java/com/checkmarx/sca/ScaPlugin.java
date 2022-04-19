@@ -1,7 +1,5 @@
 package com.checkmarx.sca;
 
-import com.checkmarx.sca.communication.AccessControlClient;
-import com.checkmarx.sca.communication.models.AccessControlCredentials;
 import com.checkmarx.sca.configuration.ConfigurationReader;
 import com.checkmarx.sca.scan.ArtifactChecker;
 import com.google.inject.Guice;
@@ -29,11 +27,8 @@ public class ScaPlugin
             var configuration = ConfigurationReader.loadConfiguration(pluginsDirectory);
             configuration.validate();
 
-            var accessControlClient = new AccessControlClient(configuration);
-            accessControlClient.Authenticate(new AccessControlCredentials("user", "pass", "tenant"));
-
             var artifactChecker = new ArtifactChecker(repositories);
-            var appInjector = new AppInjector(_logger, artifactChecker, configuration, accessControlClient);
+            var appInjector = new AppInjector(_logger, artifactChecker, configuration);
 
             _injector = Guice.createInjector(appInjector);
         } catch (Exception ex) {

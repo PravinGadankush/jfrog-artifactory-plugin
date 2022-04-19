@@ -4,9 +4,8 @@ import com.checkmarx.sca.communication.exceptions.UnexpectedResponseBodyExceptio
 import com.checkmarx.sca.communication.exceptions.UnexpectedResponseCodeException;
 import com.checkmarx.sca.configuration.ConfigurationEntry;
 import com.checkmarx.sca.configuration.PluginConfiguration;
-import com.checkmarx.sca.models.ArtifactId;
 import com.checkmarx.sca.models.ArtifactInfo;
-import com.checkmarx.sca.models.Vulnerability;
+import com.checkmarx.sca.models.PackageRiskAggregation;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import com.google.inject.Inject;
@@ -17,18 +16,15 @@ import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
-import java.util.ArrayList;
 import java.util.concurrent.ExecutionException;
 import static java.lang.String.format;
 
 public class ScaHttpClient {
-
-    private final AccessControlClient _accessControlClient;
     private final HttpClient _httpClient;
     private final String _apiUrl;
 
     @Inject
-    public ScaHttpClient(@Nonnull PluginConfiguration configuration, @Nonnull AccessControlClient accessControlClient) {
+    public ScaHttpClient(@Nonnull PluginConfiguration configuration) {
         var apiUrl = configuration.getPropertyOrDefault(ConfigurationEntry.API_URL);
         if (!apiUrl.endsWith("/")) {
             apiUrl = apiUrl + "/";
@@ -36,7 +32,6 @@ public class ScaHttpClient {
 
         _apiUrl = apiUrl;
         _httpClient = HttpClient.newHttpClient();
-        _accessControlClient = accessControlClient;
     }
 
     public ArtifactInfo getArtifactInformation(String packageType, String name, String version) throws ExecutionException, InterruptedException {
@@ -66,8 +61,8 @@ public class ScaHttpClient {
         return artifactInfo;
     }
 
-    public ArrayList<Vulnerability> getVulnerabilitiesForArtifact(@NotNull ArtifactId artifactId) throws ExecutionException, InterruptedException {
-        var request = getVulnerabilitiesForArtifactRequest(artifactId);
+    public PackageRiskAggregation getRiskAggregationOfArtifact(String packageType, String name, String version) throws ExecutionException, InterruptedException {
+        var request = getRiskAggregationArtifactRequest(packageType, name, version);
 
         var responseFuture = _httpClient.sendAsync(request, HttpResponse.BodyHandlers.ofString());
 
@@ -75,31 +70,28 @@ public class ScaHttpClient {
         if (vulnerabilitiesResponse.statusCode() != 200)
             throw new UnexpectedResponseCodeException(vulnerabilitiesResponse.statusCode());
 
-        ArrayList<Vulnerability> vulnerabilitiesList;
+        PackageRiskAggregation packageRiskAggregation;
         try {
-            Type listType = new TypeToken<ArrayList<Vulnerability>>(){}.getType();
+            Type listType = new TypeToken<PackageRiskAggregation>(){}.getType();
 
-            vulnerabilitiesList = new Gson().fromJson(vulnerabilitiesResponse.body(), listType);
+            packageRiskAggregation = new Gson().fromJson(vulnerabilitiesResponse.body(), listType);
         } catch (Exception ex) {
             throw new UnexpectedResponseBodyException(vulnerabilitiesResponse.body());
         }
 
-        if (vulnerabilitiesList == null) {
+        if (packageRiskAggregation == null) {
             throw new UnexpectedResponseBodyException("");
         }
 
-        return vulnerabilitiesList;
+        return packageRiskAggregation;
     }
 
-    private HttpRequest getVulnerabilitiesForArtifactRequest(@NotNull ArtifactId artifactId) {
+    private HttpRequest getRiskAggregationArtifactRequest(String packageType, String name, String version) {
 
-        var authHeader = _accessControlClient.GetAuthorizationHeader();
+        String body = format("{\"packageName\":\"%s\",\"version\":\"%s\",\"packageManager\":\"%s\"}", name, version, packageType);
 
-        String body = format("[\"%s\"]", artifactId.getIdentifier());
-
-        var request = HttpRequest.newBuilder(URI.create(format("%s%s", _apiUrl, "vulnerabilities/search-requests")))
+        var request = HttpRequest.newBuilder(URI.create(format("%s%s", _apiUrl, "public/risk-aggregation/aggregated-risks")))
                 .header("content-type", "application/json")
-                .setHeader(authHeader.getKey(), authHeader.getValue())
                 .POST(HttpRequest.BodyPublishers.ofString(body))
                 .build();
 
@@ -108,11 +100,9 @@ public class ScaHttpClient {
 
     private HttpRequest getArtifactInfoRequest(@NotNull String packageType, @NotNull String name, @NotNull String version) {
 
-        var authHeader = _accessControlClient.GetAuthorizationHeader();
-        var artifactPath = format("packages/%s/%s/%s", packageType, name, version);
+        var artifactPath = format("public/packages/%s/%s/%s", packageType, name, version);
 
         var request = HttpRequest.newBuilder(URI.create(format("%s%s", _apiUrl, artifactPath)))
-                .setHeader(authHeader.getKey(), authHeader.getValue())
                 .GET()
                 .build();
 

@@ -17,13 +17,6 @@ public class ArtifactId {
         PackageType = packageType;
     }
 
-    public ArtifactId(String identifier) {
-        Name = null;
-        Version = null;
-        PackageType = null;
-        _identifier = identifier;
-    }
-
     public boolean isInvalid(){
         return Name == null || Name.trim().isEmpty()
                 || Version == null || Version.trim().isEmpty()

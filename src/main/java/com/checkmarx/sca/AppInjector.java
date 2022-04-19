@@ -18,6 +18,15 @@ public class AppInjector extends AbstractModule {
 
     public AppInjector(@Nonnull Logger logger,
                        @Nonnull ArtifactChecker artifactChecker,
+                       @Nonnull PluginConfiguration configuration) {
+        _logger = logger;
+        _configuration = configuration;
+        _artifactChecker = artifactChecker;
+        _accessControlClient = null;
+    }
+
+    public AppInjector(@Nonnull Logger logger,
+                       @Nonnull ArtifactChecker artifactChecker,
                        @Nonnull PluginConfiguration configuration,
                        @Nonnull AccessControlClient accessControlClient) {
         _logger = logger;
@@ -31,6 +40,9 @@ public class AppInjector extends AbstractModule {
         bind(Logger.class).toInstance(_logger);
         bind(ArtifactChecker.class).toInstance(_artifactChecker);
         bind(PluginConfiguration.class).toInstance(_configuration);
-        bind(AccessControlClient.class).toInstance(_accessControlClient);
+
+        if (_accessControlClient != null) {
+            bind(AccessControlClient.class).toInstance(_accessControlClient);
+        }
     }
 }

@@ -47,7 +47,7 @@ public class ScaHttpClientTests {
     public void getArtifactInformationWithSuccess() throws ExecutionException, InterruptedException {
 
         this.wireMockServer.stubFor(
-                WireMock.get("/packages/Npm/lodash/0.2.1")
+                WireMock.get("/public/packages/Npm/lodash/0.2.1")
                         .willReturn(ok()
                                 .withHeader("Content-Type", "application/json; charset=UTF-8")
                                 .withBody("{\"id\":{\"identifier\":\"Npm-lodash-0.2.1\"},\"name\":\"lodash\",\"version\":\"0.2.1\",\"type\":\"Npm\",\"releaseDate\":\"2012-05-24T21:53:08\",\"description\":\"A drop-in replacement for Underscore.js that delivers performance improvements, bug fixes, and additional features.\",\"repositoryUrl\":\"git://github.com/bestiejs/lodash.git\",\"binaryUrl\":\"https://registry.npmjs.org/lodash/-/lodash-0.2.1.tgz\",\"projectUrl\":\"\",\"bugsUrl\":null,\"sourceUrl\":\"\",\"projectHomePage\":\"http://lodash.com\",\"homePage\":\"\",\"license\":\"\",\"summary\":\"\",\"url\":\"\",\"owner\":\"\"}"))
@@ -68,7 +68,7 @@ public class ScaHttpClientTests {
     public void failedToGetArtifactInformationNotFound() throws ExecutionException, InterruptedException {
 
         this.wireMockServer.stubFor(
-                WireMock.get("/packages/Npm/lodash/0.2.1")
+                WireMock.get("/public/packages/Npm/lodash/0.2.1")
                         .willReturn(aResponse().withStatus(404))
         );
 
@@ -86,7 +86,7 @@ public class ScaHttpClientTests {
     public void failed() throws InterruptedException {
 
         this.wireMockServer.stubFor(
-                WireMock.get("/packages/Npm/lodash/0.2.1")
+                WireMock.get("/public/packages/Npm/lodash/0.2.1")
                         .willReturn(aResponse().withStatus(500))
         );
 
@@ -104,7 +104,7 @@ public class ScaHttpClientTests {
     public void failedToGetArtifactInformationUnexpectedResponseBody() {
 
         this.wireMockServer.stubFor(
-                WireMock.get("/packages/Npm/lodash/0.2.1")
+                WireMock.get("/public/packages/Npm/lodash/0.2.1")
                         .willReturn(ok())
         );
 
@@ -115,36 +115,39 @@ public class ScaHttpClientTests {
         Assertions.assertThrows(UnexpectedResponseBodyException.class, () -> scaHttpClient.getArtifactInformation("Npm", "lodash", "0.2.1"));
     }
 
-    @DisplayName("Get artifact vulnerabilities with success")
+    @DisplayName("Get artifact risk aggregation with success")
     @Test
     public void getArtifactVulnerabilitiesWithSuccess() throws ExecutionException, InterruptedException {
 
         this.wireMockServer.stubFor(
-                WireMock.post("/vulnerabilities/search-requests")
-                        .withRequestBody(containing("[\"Npm-lodash-0.2.1\"]"))
+                WireMock.post("/public/risk-aggregation/aggregated-risks")
+                        .withRequestBody(containing("{\"packageName\":\"lodash\",\"version\":\"0.2.1\",\"packageManager\":\"Npm\"}"))
                         .willReturn(ok()
                                 .withHeader("Content-Type", "application/json; charset=UTF-8")
-                                .withBody("[{\"id\":\"CVE-2020-28500\",\"cwe\":\"CWE-400\",\"description\":\"Lodash before 4.17.21 is vulnerable to Regular Expression Denial of Service (ReDoS) via the toNumber, trim and trimEnd functions.\",\"vulnerabilityType\":\"Regular\",\"publishDate\":\"2021-02-15T11:15:00\",\"score\":5.3,\"severity\":\"Medium\",\"created\":\"2021-03-04T08:29:31\",\"cveName\":\"CVE-2020-28500\",\"updateTime\":\"2022-01-07T06:04:48\"}]"))
+                                .withBody("{\"packageVulnerabilitiesAggregation\":{\"vulnerabilitiesCount\":159,\"maxRiskSeverity\":\"High\",\"maxRiskScore\":9.8,\"highRiskCount\":151,\"mediumRiskCount\":8,\"lowRiskCount\":0}}"))
         );
 
         var injector = CreateAppInjectorForTests();
 
         var scaHttpClient = injector.getInstance(ScaHttpClient.class);
 
-        var artifactId = new ArtifactId("Npm-lodash-0.2.1");
+        var riskAggregationOfArtifact = scaHttpClient.getRiskAggregationOfArtifact("Npm", "lodash", "0.2.1");
 
-        var vulnerabilities = scaHttpClient.getVulnerabilitiesForArtifact(artifactId);
-
-        Assertions.assertEquals(1, vulnerabilities.size());
+        Assertions.assertEquals("High", riskAggregationOfArtifact.getVulnerabilitiesAggregation().getMaxRiskSeverity());
+        Assertions.assertEquals(159, riskAggregationOfArtifact.getVulnerabilitiesAggregation().getVulnerabilitiesCount());
+        Assertions.assertEquals(9.8, riskAggregationOfArtifact.getVulnerabilitiesAggregation().getMaxRiskScore());
+        Assertions.assertEquals(151, riskAggregationOfArtifact.getVulnerabilitiesAggregation().getHighRiskCount());
+        Assertions.assertEquals(8, riskAggregationOfArtifact.getVulnerabilitiesAggregation().getMediumRiskCount());
+        Assertions.assertEquals(0, riskAggregationOfArtifact.getVulnerabilitiesAggregation().getLowRiskCount());
     }
 
-    @DisplayName("Failed to get artifact vulnerabilities - Unexpected Response Code")
+    @DisplayName("Failed to get artifact risk aggregation - Unexpected Response Code")
     @Test
-    public void failedToGetArtifactVulnerabilitiesUnexpectedResponseCode() {
+    public void failedToGetArtifactRiskAggregationUnexpectedResponseCode() {
 
         this.wireMockServer.stubFor(
-                WireMock.post("/vulnerabilities/search-requests")
-                        .withRequestBody(containing("[\"Npm-lodash-0.2.1\"]"))
+                WireMock.post("/public/risk-aggregation/aggregated-risks")
+                        .withRequestBody(containing("{\"packageName\":\"lodash\",\"version\":\"0.2.1\",\"packageManager\":\"Npm\"}"))
                         .willReturn(aResponse().withStatus(500))
         );
 
@@ -152,18 +155,16 @@ public class ScaHttpClientTests {
 
         var scaHttpClient = injector.getInstance(ScaHttpClient.class);
 
-        var artifactId = new ArtifactId("Npm-lodash-0.2.1");
-
-        Assertions.assertThrows(UnexpectedResponseCodeException.class, () -> scaHttpClient.getVulnerabilitiesForArtifact(artifactId));
+        Assertions.assertThrows(UnexpectedResponseCodeException.class, () -> scaHttpClient.getRiskAggregationOfArtifact("Npm", "lodash", "0.2.1"));
     }
 
-    @DisplayName("Failed to get artifact vulnerabilities - Unexpected Response Body")
+    @DisplayName("Failed to get artifact risk aggregation - Unexpected Response Body")
     @Test
-    public void failedToGetArtifactVulnerabilitiesUnexpectedResponseBody() {
+    public void failedToGetArtifactRiskAggregationUnexpectedResponseBody() {
 
         this.wireMockServer.stubFor(
-                WireMock.post("/vulnerabilities/search-requests")
-                        .withRequestBody(containing("[\"Npm-lodash-0.2.1\"]"))
+                WireMock.post("/public/risk-aggregation/aggregated-risks")
+                        .withRequestBody(containing("{\"packageName\":\"lodash\",\"version\":\"0.2.1\",\"packageManager\":\"Npm\"}"))
                         .willReturn(ok())
         );
 
@@ -171,9 +172,7 @@ public class ScaHttpClientTests {
 
         var scaHttpClient = injector.getInstance(ScaHttpClient.class);
 
-        var artifactId = new ArtifactId("Npm-lodash-0.2.1");
-
-        Assertions.assertThrows(UnexpectedResponseBodyException.class, () -> scaHttpClient.getVulnerabilitiesForArtifact(artifactId));
+        Assertions.assertThrows(UnexpectedResponseBodyException.class, () -> scaHttpClient.getRiskAggregationOfArtifact("Npm", "lodash", "0.2.1"));
     }
 
     private Injector CreateAppInjectorForTests(){
