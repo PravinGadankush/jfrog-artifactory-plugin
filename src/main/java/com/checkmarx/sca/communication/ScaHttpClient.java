@@ -92,6 +92,7 @@ public class ScaHttpClient {
 
         var request = HttpRequest.newBuilder(URI.create(format("%s%s", _apiUrl, "public/risk-aggregation/aggregated-risks")))
                 .header("content-type", "application/json")
+                .header("User-Agent", GetUserAgent())
                 .POST(HttpRequest.BodyPublishers.ofString(body))
                 .build();
 
@@ -103,9 +104,14 @@ public class ScaHttpClient {
         var artifactPath = format("public/packages/%s/%s/%s", packageType, name, version);
 
         var request = HttpRequest.newBuilder(URI.create(format("%s%s", _apiUrl, artifactPath)))
+                .header("User-Agent", GetUserAgent())
                 .GET()
                 .build();
 
         return request;
+    }
+
+    private String GetUserAgent() {
+        return "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/100.0.4896.92 Safari/537.36";
     }
 }
