@@ -204,7 +204,7 @@ public class ArtifactChecker {
         _repositories.setProperty(repoPath, PropertiesConstants.LOW_VULNERABILITIES_COUNT, String.valueOf(vulnerabilitiesAggregation.getLowRiskCount()));
         _repositories.setProperty(repoPath, PropertiesConstants.MEDIUM_VULNERABILITIES_COUNT, String.valueOf(vulnerabilitiesAggregation.getMediumRiskCount()));
         _repositories.setProperty(repoPath, PropertiesConstants.HIGH_VULNERABILITIES_COUNT, String.valueOf(vulnerabilitiesAggregation.getHighRiskCount()));
-        _repositories.setProperty(repoPath, PropertiesConstants.VULNERABILITY_SCORE, String.valueOf(vulnerabilitiesAggregation.getHighRiskCount()));
+        _repositories.setProperty(repoPath, PropertiesConstants.VULNERABILITY_SCORE, String.valueOf(vulnerabilitiesAggregation.getMaxRiskScore()));
         _repositories.setProperty(repoPath, PropertiesConstants.VULNERABILITY_LEVEL, vulnerabilitiesAggregation.getMaxRiskSeverity());
         _repositories.setProperty(repoPath, PropertiesConstants.SCAN_DATE, Instant.now().toString());
     }
