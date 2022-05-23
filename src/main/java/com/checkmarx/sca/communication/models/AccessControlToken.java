@@ -1,6 +1,7 @@
 package com.checkmarx.sca.communication.models;
 
 import com.google.gson.annotations.SerializedName;
+
 import java.time.Duration;
 import java.time.Instant;
 

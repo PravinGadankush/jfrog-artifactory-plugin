@@ -2,7 +2,8 @@ package com.checkmarx.sca;
 
 import com.checkmarx.sca.communication.AccessControlClient;
 import com.checkmarx.sca.configuration.PluginConfiguration;
-import com.checkmarx.sca.scan.ArtifactChecker;
+import com.checkmarx.sca.scan.ArtifactRisksFiller;
+import com.checkmarx.sca.scan.SecurityThresholdChecker;
 import com.google.inject.AbstractModule;
 import org.slf4j.Logger;
 
@@ -11,35 +12,41 @@ import javax.annotation.Nonnull;
 public class AppInjector extends AbstractModule {
 
     private final Logger _logger;
-    private final ArtifactChecker _artifactChecker;
+    private final ArtifactRisksFiller _artifactFiller;
     private final AccessControlClient _accessControlClient;
+    private final SecurityThresholdChecker _securityThresholdChecker;
 
     private final PluginConfiguration _configuration;
 
     public AppInjector(@Nonnull Logger logger,
-                       @Nonnull ArtifactChecker artifactChecker,
-                       @Nonnull PluginConfiguration configuration) {
+                       @Nonnull ArtifactRisksFiller artifactFiller,
+                       @Nonnull PluginConfiguration configuration,
+                       @Nonnull SecurityThresholdChecker securityThresholdChecker) {
         _logger = logger;
-        _configuration = configuration;
-        _artifactChecker = artifactChecker;
         _accessControlClient = null;
+        _configuration = configuration;
+        _artifactFiller = artifactFiller;
+        _securityThresholdChecker = securityThresholdChecker;
     }
 
     public AppInjector(@Nonnull Logger logger,
-                       @Nonnull ArtifactChecker artifactChecker,
+                       @Nonnull ArtifactRisksFiller artifactFiller,
                        @Nonnull PluginConfiguration configuration,
-                       @Nonnull AccessControlClient accessControlClient) {
+                       @Nonnull AccessControlClient accessControlClient,
+                       @Nonnull SecurityThresholdChecker securityThresholdChecker) {
         _logger = logger;
         _configuration = configuration;
-        _artifactChecker = artifactChecker;
+        _artifactFiller = artifactFiller;
         _accessControlClient = accessControlClient;
+        _securityThresholdChecker = securityThresholdChecker;
     }
 
     @Override
     protected void configure() {
         bind(Logger.class).toInstance(_logger);
-        bind(ArtifactChecker.class).toInstance(_artifactChecker);
+        bind(ArtifactRisksFiller.class).toInstance(_artifactFiller);
         bind(PluginConfiguration.class).toInstance(_configuration);
+        bind(SecurityThresholdChecker.class).toInstance(_securityThresholdChecker);
 
         if (_accessControlClient != null) {
             bind(AccessControlClient.class).toInstance(_accessControlClient);

@@ -16,8 +16,7 @@ import org.slf4j.Logger;
 
 import java.util.Properties;
 
-import static org.mockito.ArgumentMatchers.isA;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.when;
 import static org.mockito.internal.verification.VerificationModeFactory.times;
 
 public class ArtifactIdBuilderTests {
@@ -28,10 +27,11 @@ public class ArtifactIdBuilderTests {
     @BeforeEach
     public void beforeEach() {
         _logger = Mockito.mock(Logger.class);
-        var configuration = new PluginConfiguration(new Properties());
-        var artifactChecker = Mockito.mock(ArtifactChecker.class);
+        var configuration = new PluginConfiguration(new Properties(), _logger);
+        var artifactRisksFiller = Mockito.mock(ArtifactRisksFiller.class);
+        var securityThresholdChecker = Mockito.mock(SecurityThresholdChecker.class);
 
-        var appInjector = new TestsInjector(_logger, artifactChecker, configuration);
+        var appInjector = new TestsInjector(_logger, configuration, artifactRisksFiller, securityThresholdChecker);
 
         _injector = Guice.createInjector(appInjector);
     }

@@ -4,6 +4,8 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
+import org.mockito.Mockito;
+import org.slf4j.Logger;
 
 import java.io.File;
 import java.io.IOException;
@@ -18,7 +20,9 @@ public class ConfigurationReaderTests {
         String path = "src/test/resources/com/checkmarx/sca/configuration";
         File resourcesDir = new File(path);
 
-        var config = ConfigurationReader.loadConfiguration(resourcesDir);
+        var logger = Mockito.mock(Logger.class);
+
+        var config = ConfigurationReader.loadConfiguration(resourcesDir, logger);
 
         Assertions.assertNotNull(config);
     }
@@ -28,8 +32,9 @@ public class ConfigurationReaderTests {
     public void FailedToLoadConfigurationDirectoryNotFound() {
         var dir = "test-dir";
         File resourcesDir = new File(dir);
+        var logger = Mockito.mock(Logger.class);
 
-        var exception = Assertions.assertThrows(IOException.class, () ->  ConfigurationReader.loadConfiguration(resourcesDir));
+        var exception = Assertions.assertThrows(IOException.class, () ->  ConfigurationReader.loadConfiguration(resourcesDir, logger));
 
         Assertions.assertTrue(exception.getMessage().contains("Directory"));
         Assertions.assertTrue(exception.getMessage().contains(dir));
@@ -40,8 +45,9 @@ public class ConfigurationReaderTests {
     public void FailedToLoadConfigurationFileNotFound() {
         var path = "src/test/resources/com/checkmarx/sca";
         File resourcesDir = new File(path);
+        var logger = Mockito.mock(Logger.class);
 
-        var exception = Assertions.assertThrows(IOException.class, () ->  ConfigurationReader.loadConfiguration(resourcesDir));
+        var exception = Assertions.assertThrows(IOException.class, () ->  ConfigurationReader.loadConfiguration(resourcesDir, logger));
 
         Assertions.assertTrue(exception.getMessage().contains("File"));
     }

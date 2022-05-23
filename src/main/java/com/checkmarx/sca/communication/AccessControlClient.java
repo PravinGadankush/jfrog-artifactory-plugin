@@ -13,6 +13,7 @@ import com.google.gson.Gson;
 import com.google.inject.Inject;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
+
 import javax.annotation.Nonnull;
 import java.net.URI;
 import java.net.URLEncoder;
@@ -24,6 +25,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
+
 import static java.lang.String.format;
 
 public class AccessControlClient {

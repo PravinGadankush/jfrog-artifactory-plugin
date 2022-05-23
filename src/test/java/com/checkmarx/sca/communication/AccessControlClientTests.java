@@ -7,7 +7,8 @@ import com.checkmarx.sca.communication.exceptions.UnexpectedAuthenticationRespon
 import com.checkmarx.sca.communication.exceptions.UserIsNotAuthenticatedException;
 import com.checkmarx.sca.communication.models.AccessControlCredentials;
 import com.checkmarx.sca.configuration.PluginConfiguration;
-import com.checkmarx.sca.scan.ArtifactChecker;
+import com.checkmarx.sca.scan.ArtifactRisksFiller;
+import com.checkmarx.sca.scan.SecurityThresholdChecker;
 import com.github.tomakehurst.wiremock.WireMockServer;
 import com.github.tomakehurst.wiremock.client.WireMock;
 import com.google.inject.Guice;
@@ -226,16 +227,17 @@ public class AccessControlClientTests {
 
     private Injector CreateAppInjectorForTests(){
         logger = Mockito.mock(Logger.class);
-        var artifactChecker = Mockito.mock(ArtifactChecker.class);
+        var artifactRisksFiller = Mockito.mock(ArtifactRisksFiller.class);
+        var securityThresholdChecker = Mockito.mock(SecurityThresholdChecker.class);
 
         var properties = new Properties();
         properties.setProperty("sca.api.url", "http://localhost:8080/");
         properties.setProperty("sca.authentication.url", "http://localhost:8080/");
 
-        var configuration = new PluginConfiguration(properties);
+        var configuration = new PluginConfiguration(properties, logger);
         var accessControlClient = new AccessControlClient(configuration);
 
-        var appInjector = new AppInjector(logger, artifactChecker, configuration, accessControlClient);
+        var appInjector = new AppInjector(logger, artifactRisksFiller, configuration, accessControlClient, securityThresholdChecker);
 
         return Guice.createInjector(appInjector);
     }

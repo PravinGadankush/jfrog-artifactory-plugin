@@ -5,12 +5,14 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.Properties;
+import org.slf4j.Logger;
+
 import static java.lang.String.format;
 
 public final class ConfigurationReader {
     private static final String CONFIGURATIONS_FILE = "cxsca-security-plugin.properties";
 
-    public static PluginConfiguration loadConfiguration(@Nonnull File pluginsDirectory) throws IOException {
+    public static PluginConfiguration loadConfiguration(@Nonnull File pluginsDirectory, @Nonnull Logger logger) throws IOException {
         if (!pluginsDirectory.exists()) {
             throw new IOException(format("Directory '%s' not found", pluginsDirectory.getAbsolutePath()));
         }
@@ -25,6 +27,6 @@ public final class ConfigurationReader {
             configuration.load(fis);
         }
 
-        return new PluginConfiguration(configuration);
+        return new PluginConfiguration(configuration, logger);
     }
 }

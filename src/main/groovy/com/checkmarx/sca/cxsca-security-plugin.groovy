@@ -15,7 +15,7 @@ private void scanExistingArtifacts() {
     scaPlugin = new ScaPlugin(log, pluginsDirectory, repositories)
 
     searches.artifactsByName('*').each { artifact ->
-        scaPlugin.beforeDownload(artifact)
+        scaPlugin.checkArtifactsAlreadyPresent(artifact)
     }
 
     log.info("Initialization of Sca Security Plugin completed")

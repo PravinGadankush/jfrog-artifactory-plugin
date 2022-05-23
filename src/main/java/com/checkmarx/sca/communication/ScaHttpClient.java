@@ -10,6 +10,7 @@ import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import com.google.inject.Inject;
 import org.jetbrains.annotations.NotNull;
+
 import javax.annotation.Nonnull;
 import java.lang.reflect.Type;
 import java.net.URI;
@@ -17,9 +18,11 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.util.concurrent.ExecutionException;
+
 import static java.lang.String.format;
 
 public class ScaHttpClient {
+    private final String UserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/100.0.4896.92 Safari/537.36";
     private final HttpClient _httpClient;
     private final String _apiUrl;
 
@@ -66,17 +69,17 @@ public class ScaHttpClient {
 
         var responseFuture = _httpClient.sendAsync(request, HttpResponse.BodyHandlers.ofString());
 
-        var vulnerabilitiesResponse = responseFuture.get();
-        if (vulnerabilitiesResponse.statusCode() != 200)
-            throw new UnexpectedResponseCodeException(vulnerabilitiesResponse.statusCode());
+        var risksResponse = responseFuture.get();
+        if (risksResponse.statusCode() != 200)
+            throw new UnexpectedResponseCodeException(risksResponse.statusCode());
 
         PackageRiskAggregation packageRiskAggregation;
         try {
             Type listType = new TypeToken<PackageRiskAggregation>(){}.getType();
 
-            packageRiskAggregation = new Gson().fromJson(vulnerabilitiesResponse.body(), listType);
+            packageRiskAggregation = new Gson().fromJson(risksResponse.body(), listType);
         } catch (Exception ex) {
-            throw new UnexpectedResponseBodyException(vulnerabilitiesResponse.body());
+            throw new UnexpectedResponseBodyException(risksResponse.body());
         }
 
         if (packageRiskAggregation == null) {
@@ -92,7 +95,7 @@ public class ScaHttpClient {
 
         var request = HttpRequest.newBuilder(URI.create(format("%s%s", _apiUrl, "public/risk-aggregation/aggregated-risks")))
                 .header("content-type", "application/json")
-                .header("User-Agent", GetUserAgent())
+                .header("User-Agent", UserAgent)
                 .POST(HttpRequest.BodyPublishers.ofString(body))
                 .build();
 
@@ -104,14 +107,10 @@ public class ScaHttpClient {
         var artifactPath = format("public/packages/%s/%s/%s", packageType, name, version);
 
         var request = HttpRequest.newBuilder(URI.create(format("%s%s", _apiUrl, artifactPath)))
-                .header("User-Agent", GetUserAgent())
+                .header("User-Agent", UserAgent)
                 .GET()
                 .build();
 
         return request;
-    }
-
-    private String GetUserAgent() {
-        return "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/100.0.4896.92 Safari/537.36";
     }
 }

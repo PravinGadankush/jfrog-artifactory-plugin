@@ -3,7 +3,6 @@ package com.checkmarx.sca.models;
 import com.google.gson.annotations.SerializedName;
 
 public class VulnerabilitiesAggregation {
-
     @SerializedName("vulnerabilitiesCount")
     private int _vulnerabilitiesCount;
 

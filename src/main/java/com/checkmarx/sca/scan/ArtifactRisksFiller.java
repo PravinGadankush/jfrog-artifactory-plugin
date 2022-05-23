@@ -11,7 +11,9 @@ import com.checkmarx.sca.models.ArtifactId;
 import com.checkmarx.sca.models.ArtifactInfo;
 import com.checkmarx.sca.models.PackageRiskAggregation;
 import com.google.inject.Inject;
-import org.artifactory.repo.*;
+import org.artifactory.md.Properties;
+import org.artifactory.repo.RepoPath;
+import org.artifactory.repo.Repositories;
 import org.slf4j.Logger;
 
 import javax.annotation.Nonnull;
@@ -20,7 +22,7 @@ import java.util.ArrayList;
 
 import static java.lang.String.format;
 
-public class ArtifactChecker {
+public class ArtifactRisksFiller {
 
     @Inject
     private Logger _logger;
@@ -36,29 +38,22 @@ public class ArtifactChecker {
 
     private final Repositories _repositories;
 
-    public ArtifactChecker(@Nonnull Repositories repositories) {
+    public ArtifactRisksFiller(@Nonnull Repositories repositories) {
         _repositories = repositories;
     }
 
-    public void checkArtifact(@Nonnull RepoPath repoPath) {
+    public boolean addArtifactRisks(@Nonnull RepoPath repoPath, @Nonnull ArrayList<RepoPath> nonVirtualRepoPaths) {
         var repositoryKey = repoPath.getRepoKey();
         var repoConfiguration = _repositories.getRepositoryConfiguration(repositoryKey);
 
-        var physicalRepoPaths = new ArrayList<RepoPath>();
-        if (repoConfiguration instanceof VirtualRepositoryConfiguration) {
-            setPhysicalRepoPathsOfVirtualRepository(physicalRepoPaths, repoConfiguration, repoPath.getPath());
-        } else {
-            physicalRepoPaths.add(repoPath);
-        }
-
-        if (physicalRepoPaths.size() == 0) {
+        if (nonVirtualRepoPaths.size() == 0) {
             _logger.warn(format("Artifact not found in any repository. Artifact name: %s.", repoPath.getName()));
-            return;
+            return false;
         }
 
-        if (scanIsNotNeeded(physicalRepoPaths)) {
+        if (scanIsNotNeeded(nonVirtualRepoPaths)) {
             _logger.info(format("Scan ignored by cache configuration. Artifact name: %s", repoPath.getName()));
-            return;
+            return true;
         }
 
         ArtifactId artifactId;
@@ -68,7 +63,7 @@ public class ArtifactChecker {
 
             if (FileShouldBeIgnored(repoPath, packageManager)) {
                 _logger.debug(format("Not an artifact should be ignored. File Name: %s", repoPath.getName()));
-                return;
+                return false;
             }
 
             var fileLayoutInfo = _repositories.getLayoutInfo(repoPath);
@@ -76,30 +71,27 @@ public class ArtifactChecker {
 
             if (artifactId.isInvalid()) {
                 _logger.error(format("The artifact id was not built correctly. PackageType: %s, Name: %s, Version: %s", artifactId.PackageType, artifactId.Name, artifactId.Version));
-                return;
+                return false;
             }
         } catch (Exception ex) {
             _logger.error(format("Exception Message: %s. Artifact Name: %s.", ex.getMessage(), repoPath.getName()), ex);
-            return;
+            return false;
         }
 
         _logger.info(format("Started artifact verification. Artifact name: %s", repoPath.getName()));
 
-        setProperties(physicalRepoPaths, artifactId);
+        var packageRiskAggregation = scanArtifact(artifactId);
+
+        var risksAddedSuccessfully = false;
+        if (packageRiskAggregation != null) {
+            addArtifactRiskInfo(nonVirtualRepoPaths, packageRiskAggregation);
+            risksAddedSuccessfully = true;
+        }
 
         _logger.info(format("Ended the artifact verification. Artifact name: %s", repoPath.getName()));
-    }
 
-    private void setPhysicalRepoPathsOfVirtualRepository(ArrayList<RepoPath> physicalRepoPaths, RepositoryConfiguration repoConfiguration, String artifactPath){
-        var virtualConfiguration = (VirtualRepositoryConfiguration) repoConfiguration;
-        for (var repo : virtualConfiguration.getRepositories()) {
-            var repoPathFromVirtual = RepoPathFactory.create(repo, artifactPath);
-            if (_repositories.exists(repoPathFromVirtual)) {
-                physicalRepoPaths.add(repoPathFromVirtual);
-            }
-        }
+        return risksAddedSuccessfully;
     }
-
 
     private boolean scanIsNotNeeded(@Nonnull ArrayList<RepoPath> repoPaths) {
         var expirationTime = getExpirationTime();
@@ -119,7 +111,13 @@ public class ArtifactChecker {
                 return false;
             }
 
-            var scanDate = _repositories.getProperty(repoPath, PropertiesConstants.SCAN_DATE);
+            var properties = _repositories.getProperties(repoPath);
+            if (properties == null || !allPropertiesDefined(properties)) {
+                _logger.debug(format("There are missing properties, the scan will be performed. Artifact: %s", repoPath.getName()));
+                return false;
+            }
+
+            var scanDate = properties.getFirst(PropertiesConstants.LAST_SCAN);
             if (scanDate == null || scanDate.trim().isEmpty()) {
                 return false;
             }
@@ -132,6 +130,16 @@ public class ArtifactChecker {
             _logger.error(format("Unexpected error when checking the last scan date for the artifact: %s", repoPath.getName()), ex);
             return false;
         }
+    }
+
+    private boolean allPropertiesDefined(Properties properties) {
+        return properties.containsKey(PropertiesConstants.TOTAL_RISKS_COUNT)
+                && properties.containsKey(PropertiesConstants.LOW_RISKS_COUNT)
+                && properties.containsKey(PropertiesConstants.MEDIUM_RISKS_COUNT)
+                && properties.containsKey(PropertiesConstants.HIGH_RISKS_COUNT)
+                && properties.containsKey(PropertiesConstants.RISK_SCORE)
+                && properties.containsKey(PropertiesConstants.RISK_LEVEL)
+                && properties.containsKey(PropertiesConstants.LAST_SCAN);
     }
 
     private int getExpirationTime() {
@@ -149,63 +157,54 @@ public class ArtifactChecker {
     private boolean FileShouldBeIgnored(RepoPath repoPath, IPackageManager packageManager) {
         var notNugetPackage = packageManager == PackageManager.NUGET && !repoPath.getPath().endsWith(".nupkg");
         var jsonFile = repoPath.getPath().endsWith(".json");
-        return notNugetPackage || jsonFile;
+        var htmlFile = repoPath.getPath().endsWith(".html");
+        return notNugetPackage || jsonFile || htmlFile;
     }
 
-    private void setProperties(@Nonnull ArrayList<RepoPath> repoPaths, @Nonnull ArtifactId artifactId) {
+    private PackageRiskAggregation scanArtifact(@Nonnull ArtifactId artifactId) {
         ArtifactInfo artifactInfo;
         try {
             artifactInfo = _scaHttpClient.getArtifactInformation(artifactId.PackageType, artifactId.Name, artifactId.Version);
-            addArtifactInfoToProperties(repoPaths, artifactInfo);
+            _logger.debug(format("For CxSCA the artifact is identified by %s.", artifactInfo.getId().getIdentifier()));
         } catch (Exception ex) {
 
             if (ex instanceof UnexpectedResponseCodeException && ((UnexpectedResponseCodeException)ex).StatusCode == 404) {
                 _logger.error(format("Artifact not found, artifact name: %s. Exception Message: %s.", artifactId.Name, ex.getMessage()));
-                return;
+                return null;
             }
 
             _logger.error(format("Failed to get artifact information. Exception Message: %s. Artifact Name: %s.", ex.getMessage(), artifactId.Name));
-            return;
+            return null;
         }
 
         try {
-            var packageRiskAggregation = _scaHttpClient.getRiskAggregationOfArtifact(artifactInfo.getPackageType(), artifactInfo.getName(), artifactInfo.getVersion());
-            addArtifactRiskInfo(repoPaths, packageRiskAggregation);
+            return _scaHttpClient.getRiskAggregationOfArtifact(artifactInfo.getPackageType(), artifactInfo.getName(), artifactInfo.getVersion());
         } catch (Exception ex) {
-            _logger.error(format("Failed to get vulnerabilities of artifact. Exception Message: %s. Artifact Name: %s.", ex.getMessage(), artifactId.Name));
-        }
-    }
-
-    private void addArtifactInfoToProperties(@Nonnull ArrayList<RepoPath> repoPaths, @Nonnull ArtifactInfo artifactInfo) {
-        for (var repoPath : repoPaths) {
-            try{
-                _repositories.setProperty(repoPath, PropertiesConstants.ID, artifactInfo.getId().getIdentifier());
-            } catch (Exception ex) {
-                _logger.error(format("Failed to add artifact info to the properties. Exception Message: %s. Artifact Name: %s.", ex.getMessage(), repoPath.getName()));
-            }
+            _logger.error(format("Failed to get risk aggregation of artifact. Exception Message: %s. Artifact Name: %s.", ex.getMessage(), artifactId.Name));
+            return null;
         }
     }
 
     private void addArtifactRiskInfo(@Nonnull ArrayList<RepoPath> repoPaths, @Nonnull PackageRiskAggregation packageRiskAggregation) {
         for (var repoPath : repoPaths) {
             try{
-                addArtifactRiskInfo(repoPath, packageRiskAggregation);
+                addArtifactRisksInfo(repoPath, packageRiskAggregation);
             } catch (Exception ex) {
-                _logger.error(format("Failed to add vulnerabilities info to the properties. Exception Message: %s. Artifact Name: %s.", ex.getMessage(), repoPath.getName()));
+                _logger.error(format("Failed to add risks information to the properties. Exception Message: %s. Artifact Name: %s.", ex.getMessage(), repoPath.getName()));
             }
         }
     }
 
-    private void addArtifactRiskInfo(RepoPath repoPath, PackageRiskAggregation packageRiskAggregation) {
+    private void addArtifactRisksInfo(RepoPath repoPath, PackageRiskAggregation packageRiskAggregation) {
 
         var vulnerabilitiesAggregation = packageRiskAggregation.getVulnerabilitiesAggregation();
 
-        _repositories.setProperty(repoPath, PropertiesConstants.VULNERABILITIES_COUNT, String.valueOf(vulnerabilitiesAggregation.getVulnerabilitiesCount()));
-        _repositories.setProperty(repoPath, PropertiesConstants.LOW_VULNERABILITIES_COUNT, String.valueOf(vulnerabilitiesAggregation.getLowRiskCount()));
-        _repositories.setProperty(repoPath, PropertiesConstants.MEDIUM_VULNERABILITIES_COUNT, String.valueOf(vulnerabilitiesAggregation.getMediumRiskCount()));
-        _repositories.setProperty(repoPath, PropertiesConstants.HIGH_VULNERABILITIES_COUNT, String.valueOf(vulnerabilitiesAggregation.getHighRiskCount()));
-        _repositories.setProperty(repoPath, PropertiesConstants.VULNERABILITY_SCORE, String.valueOf(vulnerabilitiesAggregation.getMaxRiskScore()));
-        _repositories.setProperty(repoPath, PropertiesConstants.VULNERABILITY_LEVEL, vulnerabilitiesAggregation.getMaxRiskSeverity());
-        _repositories.setProperty(repoPath, PropertiesConstants.SCAN_DATE, Instant.now().toString());
+        _repositories.setProperty(repoPath, PropertiesConstants.TOTAL_RISKS_COUNT, String.valueOf(vulnerabilitiesAggregation.getVulnerabilitiesCount()));
+        _repositories.setProperty(repoPath, PropertiesConstants.LOW_RISKS_COUNT, String.valueOf(vulnerabilitiesAggregation.getLowRiskCount()));
+        _repositories.setProperty(repoPath, PropertiesConstants.MEDIUM_RISKS_COUNT, String.valueOf(vulnerabilitiesAggregation.getMediumRiskCount()));
+        _repositories.setProperty(repoPath, PropertiesConstants.HIGH_RISKS_COUNT, String.valueOf(vulnerabilitiesAggregation.getHighRiskCount()));
+        _repositories.setProperty(repoPath, PropertiesConstants.RISK_SCORE, String.valueOf(vulnerabilitiesAggregation.getMaxRiskScore()));
+        _repositories.setProperty(repoPath, PropertiesConstants.RISK_LEVEL, vulnerabilitiesAggregation.getMaxRiskSeverity());
+        _repositories.setProperty(repoPath, PropertiesConstants.LAST_SCAN, Instant.now().toString());
     }
 }

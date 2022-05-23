@@ -2,13 +2,13 @@ package com.checkmarx.sca;
 
 public class PropertiesConstants {
 
-    public static final String ID = "CxSCA.PackageIdentification";
+    public static final String TOTAL_RISKS_COUNT = "CxSCA.TotalRisks";
+    public static final String LOW_RISKS_COUNT = "CxSCA.LowSeverityRisks";
+    public static final String MEDIUM_RISKS_COUNT = "CxSCA.MediumSeverityRisks";
+    public static final String HIGH_RISKS_COUNT = "CxSCA.HighSeverityRisks";
+    public static final String RISK_SCORE = "CxSCA.RiskScore";
+    public static final String RISK_LEVEL = "CxSCA.RiskLevel";
+    public static final String LAST_SCAN = "CxSCA.LastScanned";
 
-    public static final String VULNERABILITIES_COUNT = "CxSCA.TotalNumberOfVulnerabilities";
-    public static final String LOW_VULNERABILITIES_COUNT = "CxSCA.TotalLowScoreVulnerabilities";
-    public static final String MEDIUM_VULNERABILITIES_COUNT = "CxSCA.TotalMediumScoreVulnerabilities";
-    public static final String HIGH_VULNERABILITIES_COUNT = "CxSCA.TotalHighScoreVulnerabilities";
-    public static final String VULNERABILITY_SCORE = "CxSCA.VulnerabilityScore";
-    public static final String VULNERABILITY_LEVEL = "CxSCA.VulnerabilityLevel";
-    public static final String SCAN_DATE = "CxSCA.ScanDate";
+    public static final String IGNORE_THRESHOLD = "CxSCA.IgnoreRiskThreshold";
 }

@@ -5,8 +5,8 @@ import com.checkmarx.sca.communication.exceptions.UnexpectedResponseBodyExceptio
 import com.checkmarx.sca.communication.exceptions.UnexpectedResponseCodeException;
 import com.checkmarx.sca.communication.models.AuthenticationHeader;
 import com.checkmarx.sca.configuration.PluginConfiguration;
-import com.checkmarx.sca.models.ArtifactId;
-import com.checkmarx.sca.scan.ArtifactChecker;
+import com.checkmarx.sca.scan.ArtifactRisksFiller;
+import com.checkmarx.sca.scan.SecurityThresholdChecker;
 import com.github.tomakehurst.wiremock.WireMockServer;
 import com.github.tomakehurst.wiremock.client.WireMock;
 import com.google.inject.Guice;
@@ -65,7 +65,7 @@ public class ScaHttpClientTests {
 
     @DisplayName("Failed to get artifact information - Not found")
     @Test
-    public void failedToGetArtifactInformationNotFound() throws ExecutionException, InterruptedException {
+    public void failedToGetArtifactInformationNotFound() {
 
         this.wireMockServer.stubFor(
                 WireMock.get("/public/packages/Npm/lodash/0.2.1")
@@ -83,7 +83,7 @@ public class ScaHttpClientTests {
 
     @DisplayName("Failed to get artifact information - Unexpected Response Code")
     @Test
-    public void failed() throws InterruptedException {
+    public void failed() {
 
         this.wireMockServer.stubFor(
                 WireMock.get("/public/packages/Npm/lodash/0.2.1")
@@ -177,7 +177,8 @@ public class ScaHttpClientTests {
 
     private Injector CreateAppInjectorForTests(){
         var logger = Mockito.mock(Logger.class);
-        var artifactChecker = Mockito.mock(ArtifactChecker.class);
+        var artifactFiller = Mockito.mock(ArtifactRisksFiller.class);
+        var securityThresholdChecker = Mockito.mock(SecurityThresholdChecker.class);
         var accessControlClient = Mockito.mock(AccessControlClient.class);
         Mockito.when(accessControlClient.GetAuthorizationHeader()).thenReturn(new AuthenticationHeader<>("Authorization", "Bearer token"));
 
@@ -186,9 +187,9 @@ public class ScaHttpClientTests {
         properties.setProperty("sca.api.url", "http://localhost:8080/");
         properties.setProperty("sca.authentication.url", "http://localhost:8080/");
 
-        var configuration = new PluginConfiguration(properties);
+        var configuration = new PluginConfiguration(properties, logger);
 
-        var appInjector = new TestsInjector(logger, artifactChecker, configuration);
+        var appInjector = new TestsInjector(logger, configuration, artifactFiller, securityThresholdChecker);
         appInjector.setAccessControlClient(accessControlClient);
         return Guice.createInjector(appInjector);
     }

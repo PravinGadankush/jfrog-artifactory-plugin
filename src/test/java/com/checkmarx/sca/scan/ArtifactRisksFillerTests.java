@@ -12,25 +12,29 @@ import com.google.gson.reflect.TypeToken;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import org.artifactory.fs.FileLayoutInfo;
-import org.artifactory.repo.*;
+import org.artifactory.repo.LocalRepositoryConfiguration;
+import org.artifactory.repo.RepoPath;
+import org.artifactory.repo.Repositories;
+import org.artifactory.repo.VirtualRepositoryConfiguration;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.mockito.MockedStatic;
 import org.mockito.Mockito;
 import org.slf4j.Logger;
+
 import java.lang.reflect.Type;
 import java.time.Instant;
-import java.util.List;
-import java.util.Properties;
+import java.util.*;
 import java.util.concurrent.ExecutionException;
+
 import static java.lang.String.format;
 import static org.mockito.ArgumentMatchers.isA;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.when;
 import static org.mockito.internal.verification.VerificationModeFactory.times;
 
-public class ArtifactCheckerTests {
+public class ArtifactRisksFillerTests {
 
     private final String RepoKey = "test-remote";
 
@@ -55,9 +59,11 @@ public class ArtifactCheckerTests {
         _logger = Mockito.mock(Logger.class);
         _repositories = Mockito.mock(Repositories.class);
         _scaHttpClient = Mockito.mock(ScaHttpClient.class);
-        var _configuration = new PluginConfiguration(new Properties());
+        var securityThresholdChecker = Mockito.mock(SecurityThresholdChecker.class);
 
-        var appInjector = new TestsInjector(_logger, new ArtifactChecker(_repositories), _configuration);
+        var _configuration = new PluginConfiguration(new Properties(), _logger);
+
+        var appInjector = new TestsInjector(_logger, _configuration, new ArtifactRisksFiller(_repositories), securityThresholdChecker);
         appInjector.setScaHttpClient(_scaHttpClient);
 
         _injector = Guice.createInjector(appInjector);
@@ -65,7 +71,7 @@ public class ArtifactCheckerTests {
 
     @DisplayName("Check artifact with success")
     @Test
-    public void checkArtifactWithSuccess() throws ExecutionException {
+    public void addArtifactRisksWithSuccess() {
 
         var fileLayoutInfo = CreateFileLayoutInfoMock();
 
@@ -79,17 +85,17 @@ public class ArtifactCheckerTests {
 
         MockScaHttpClientMethods();
 
-        var artifactChecker = _injector.getInstance(ArtifactChecker.class);
+        var ArtifactRisksFiller = _injector.getInstance(ArtifactRisksFiller.class);
 
-        artifactChecker.checkArtifact(_mainRepoPath);
+        ArtifactRisksFiller.addArtifactRisks(_mainRepoPath, new ArrayList<>(List.of(_mainRepoPath)));
 
         withoutWarningsAndErrors();
-        Mockito.verify(_repositories, times(8)).setProperty(isA(RepoPath.class), isA(String.class), isA(String.class));
+        Mockito.verify(_repositories, times(7)).setProperty(isA(RepoPath.class), isA(String.class), isA(String.class));
     }
 
-    @DisplayName("Check artifact with success - virtual repository")
+    @DisplayName("Check artifact with success - two repositories repository")
     @Test
-    public void checkArtifactWithSuccessFromVirtualRepo() throws ExecutionException, InterruptedException {
+    public void addArtifactRisksWithSuccessFromVirtualRepo() throws ExecutionException, InterruptedException {
 
         var repoPathLocal = Mockito.mock(RepoPath.class);
 
@@ -97,7 +103,6 @@ public class ArtifactCheckerTests {
 
         var virtualRepositoryConfiguration = Mockito.mock(VirtualRepositoryConfiguration.class);
         when(virtualRepositoryConfiguration.getPackageType()).thenReturn(ArtifactType);
-        when(virtualRepositoryConfiguration.getRepositories()).thenReturn(List.of("xyz", "abc"));
 
         when(_repositories.exists(repoPathLocal)).thenReturn(true);
         when(_repositories.getLayoutInfo(_mainRepoPath)).thenReturn(fileLayoutInfo);
@@ -106,26 +111,20 @@ public class ArtifactCheckerTests {
 
         MockScaHttpClientMethods();
 
-        var artifactChecker = _injector.getInstance(ArtifactChecker.class);
+        var ArtifactRisksFiller = _injector.getInstance(ArtifactRisksFiller.class);
 
-        try (MockedStatic<RepoPathFactory> utilities = Mockito.mockStatic(RepoPathFactory.class)) {
-            utilities.when(() -> RepoPathFactory.create("xyz", _mainRepoPath.getName()))
-                    .thenReturn(repoPathLocal);
-            utilities.when(() -> RepoPathFactory.create("abc", _mainRepoPath.getName()))
-                    .thenReturn(repoPathLocal);
+        var result = ArtifactRisksFiller.addArtifactRisks(_mainRepoPath, new ArrayList<>(List.of(repoPathLocal, repoPathLocal)));
 
-            artifactChecker.checkArtifact(_mainRepoPath);
-        }
-
+        Assertions.assertTrue(result);
         withoutWarningsAndErrors();
-        Mockito.verify(_repositories, times(16)).setProperty(isA(RepoPath.class), isA(String.class), isA(String.class));
+        Mockito.verify(_repositories, times(14)).setProperty(isA(RepoPath.class), isA(String.class), isA(String.class));
         Mockito.verify(_scaHttpClient, times(1)).getArtifactInformation(isA(String.class), isA(String.class), isA(String.class));
         Mockito.verify(_scaHttpClient, times(1)).getRiskAggregationOfArtifact(isA(String.class), isA(String.class), isA(String.class));
     }
 
-    @DisplayName("Check artifact with success - virtual repository not ignored by one")
+    @DisplayName("Check artifact with success - two repositories not ignored by one")
     @Test
-    public void checkArtifactWithSuccessFromVirtualRepoNotIgnoredByOne() throws ExecutionException, InterruptedException {
+    public void addArtifactRisksWithSuccessFromVirtualRepoNotIgnoredByOne() throws ExecutionException, InterruptedException {
 
         var repoPathLocalOld = Mockito.mock(RepoPath.class);
         var repoPathLocalRecent = Mockito.mock(RepoPath.class);
@@ -134,58 +133,41 @@ public class ArtifactCheckerTests {
 
         var virtualRepositoryConfiguration = Mockito.mock(VirtualRepositoryConfiguration.class);
         when(virtualRepositoryConfiguration.getPackageType()).thenReturn(ArtifactType);
-        when(virtualRepositoryConfiguration.getRepositories()).thenReturn(List.of("xyz", "abc"));
 
         when(_repositories.exists(repoPathLocalOld)).thenReturn(true);
         when(_repositories.exists(repoPathLocalRecent)).thenReturn(true);
         when(_repositories.getLayoutInfo(_mainRepoPath)).thenReturn(fileLayoutInfo);
         when(_repositories.getRepositoryConfiguration(RepoKey)).thenReturn(virtualRepositoryConfiguration);
-        when(_repositories.getProperty(repoPathLocalOld, PropertiesConstants.SCAN_DATE)).thenReturn(Instant.now().minusSeconds(22000).toString());
-        when(_repositories.getProperty(repoPathLocalRecent, PropertiesConstants.SCAN_DATE)).thenReturn(Instant.now().toString());
+
+        getAllCxProperties(repoPathLocalOld, Instant.now().minusSeconds(22000).toString());
+        getAllCxProperties(repoPathLocalRecent, Instant.now().toString());
         when(_repositories.setProperty(isA(RepoPath.class), isA(String.class), isA(String.class))).thenReturn(null);
 
         MockScaHttpClientMethods();
 
-        var artifactChecker = _injector.getInstance(ArtifactChecker.class);
+        var ArtifactRisksFiller = _injector.getInstance(ArtifactRisksFiller.class);
+        var result = ArtifactRisksFiller.addArtifactRisks(_mainRepoPath, new ArrayList<>(List.of(repoPathLocalRecent, repoPathLocalOld)));
 
-        try (MockedStatic<RepoPathFactory> utilities = Mockito.mockStatic(RepoPathFactory.class)) {
-            utilities.when(() -> RepoPathFactory.create("xyz", _mainRepoPath.getName()))
-                    .thenReturn(repoPathLocalRecent);
-            utilities.when(() -> RepoPathFactory.create("abc", _mainRepoPath.getName()))
-                    .thenReturn(repoPathLocalOld);
-
-            artifactChecker.checkArtifact(_mainRepoPath);
-        }
-
+        Assertions.assertTrue(result);
         withoutWarningsAndErrors();
-        Mockito.verify(_repositories, times(16)).setProperty(isA(RepoPath.class), isA(String.class), isA(String.class));
+        Mockito.verify(_repositories, times(14)).setProperty(isA(RepoPath.class), isA(String.class), isA(String.class));
         Mockito.verify(_scaHttpClient, times(1)).getArtifactInformation(isA(String.class), isA(String.class), isA(String.class));
         Mockito.verify(_scaHttpClient, times(1)).getRiskAggregationOfArtifact(isA(String.class), isA(String.class), isA(String.class));
     }
 
     @DisplayName("Failed to check artifact - artifact not found")
     @Test
-    public void failedToCheckArtifactArtifactNotFound() throws ExecutionException, InterruptedException {
-
-        var repoPathLocal = Mockito.mock(RepoPath.class);
+    public void failedToAddArtifactRisksArtifactNotFound() throws ExecutionException, InterruptedException {
 
         var virtualRepositoryConfiguration = Mockito.mock(VirtualRepositoryConfiguration.class);
-        when(virtualRepositoryConfiguration.getRepositories()).thenReturn(List.of("xyz", "abc"));
 
-        when(_repositories.exists(repoPathLocal)).thenReturn(false);
         when(_repositories.getRepositoryConfiguration(RepoKey)).thenReturn(virtualRepositoryConfiguration);
 
-        var artifactChecker = _injector.getInstance(ArtifactChecker.class);
+        var ArtifactRisksFiller = _injector.getInstance(ArtifactRisksFiller.class);
 
-        try (MockedStatic<RepoPathFactory> utilities = Mockito.mockStatic(RepoPathFactory.class)) {
-            utilities.when(() -> RepoPathFactory.create("xyz", _mainRepoPath.getName()))
-                    .thenReturn(repoPathLocal);
-            utilities.when(() -> RepoPathFactory.create("abc", _mainRepoPath.getName()))
-                    .thenReturn(repoPathLocal);
+        var result = ArtifactRisksFiller.addArtifactRisks(_mainRepoPath, new ArrayList<>());
 
-            artifactChecker.checkArtifact(_mainRepoPath);
-        }
-
+        Assertions.assertFalse(result);
         Mockito.verify(_logger, times(1)).warn(Mockito.argThat(s -> s.contains("Artifact not found in any repository.")));
         Mockito.verify(_scaHttpClient, never()).getArtifactInformation(isA(String.class), isA(String.class), isA(String.class));
         Mockito.verify(_scaHttpClient, never()).getRiskAggregationOfArtifact(isA(String.class), isA(String.class), isA(String.class));
@@ -199,20 +181,54 @@ public class ArtifactCheckerTests {
 
         when(_repositories.exists(_mainRepoPath)).thenReturn(true);
         when(_repositories.getRepositoryConfiguration(RepoKey)).thenReturn(localRepositoryConfiguration);
-        when(_repositories.getProperty(_mainRepoPath, PropertiesConstants.SCAN_DATE)).thenReturn(Instant.now().toString());
+        getAllCxProperties(_mainRepoPath, Instant.now().toString());
 
-        var artifactChecker = _injector.getInstance(ArtifactChecker.class);
+        var ArtifactRisksFiller = _injector.getInstance(ArtifactRisksFiller.class);
 
-        artifactChecker.checkArtifact(_mainRepoPath);
+        var result = ArtifactRisksFiller.addArtifactRisks(_mainRepoPath, new ArrayList<>(List.of(_mainRepoPath)));
 
+        Assertions.assertTrue(result);
         Mockito.verify(_logger, times(1)).info(Mockito.argThat(s -> s.contains("Scan ignored by cache configuration.")));
         Mockito.verify(_scaHttpClient, never()).getArtifactInformation(isA(String.class), isA(String.class), isA(String.class));
         Mockito.verify(_scaHttpClient, never()).getRiskAggregationOfArtifact(isA(String.class), isA(String.class), isA(String.class));
     }
 
+    @DisplayName("Artifact verification not ignored - missing properties")
+    @Test
+    public void artifactVerificationNotIgnoredMissingProperties() {
+
+        var fileLayoutInfo = CreateFileLayoutInfoMock();
+
+        var localRepositoryConfiguration = Mockito.mock(LocalRepositoryConfiguration.class);
+        when(localRepositoryConfiguration.getPackageType()).thenReturn(ArtifactType);
+
+        when(_repositories.exists(_mainRepoPath)).thenReturn(true);
+        when(_repositories.getLayoutInfo(_mainRepoPath)).thenReturn(fileLayoutInfo);
+        when(_repositories.getRepositoryConfiguration(RepoKey)).thenReturn(localRepositoryConfiguration);
+        when(_repositories.setProperty(isA(RepoPath.class), isA(String.class), isA(String.class))).thenReturn(null);
+
+        var properties = Mockito.mock(org.artifactory.md.Properties.class);
+        when(properties.containsKey(PropertiesConstants.TOTAL_RISKS_COUNT)).thenReturn(false);
+        when(properties.containsKey(PropertiesConstants.LAST_SCAN)).thenReturn(true);
+        when(properties.getFirst(PropertiesConstants.LAST_SCAN)).thenReturn(Instant.now().toString());
+
+        when(_repositories.getProperties(_mainRepoPath)).thenReturn(properties);
+
+        MockScaHttpClientMethods();
+
+        var ArtifactRisksFiller = _injector.getInstance(ArtifactRisksFiller.class);
+
+        var result = ArtifactRisksFiller.addArtifactRisks(_mainRepoPath, new ArrayList<>(List.of(_mainRepoPath)));
+
+        Assertions.assertTrue(result);
+        withoutWarningsAndErrors();
+        Mockito.verify(_repositories, times(7)).setProperty(isA(RepoPath.class), isA(String.class), isA(String.class));
+    }
+
+
     @DisplayName("Failed to check artifact - invalid artifact id")
     @Test
-    public void failedToCheckArtifactInvalidArtifactId() throws ExecutionException, InterruptedException {
+    public void failedToAddArtifactRisksInvalidArtifactId() throws ExecutionException, InterruptedException {
 
         var fileLayoutInfo = CreateFileLayoutInfoMock();
 
@@ -223,10 +239,11 @@ public class ArtifactCheckerTests {
         when(_repositories.getLayoutInfo(_mainRepoPath)).thenReturn(fileLayoutInfo);
         when(_repositories.getRepositoryConfiguration(RepoKey)).thenReturn(localRepositoryConfiguration);
 
-        var artifactChecker = _injector.getInstance(ArtifactChecker.class);
+        var ArtifactRisksFiller = _injector.getInstance(ArtifactRisksFiller.class);
 
-        artifactChecker.checkArtifact(_mainRepoPath);
+        var result = ArtifactRisksFiller.addArtifactRisks(_mainRepoPath, new ArrayList<>(List.of(_mainRepoPath)));
 
+        Assertions.assertFalse(result);
         Mockito.verify(_logger, times(1)).error(Mockito.argThat(s -> s.contains("The artifact id was not built correctly.")));
         Mockito.verify(_scaHttpClient, never()).getArtifactInformation(isA(String.class), isA(String.class), isA(String.class));
         Mockito.verify(_scaHttpClient, never()).getRiskAggregationOfArtifact(isA(String.class), isA(String.class), isA(String.class));
@@ -234,7 +251,7 @@ public class ArtifactCheckerTests {
 
     @DisplayName("Failed to check artifact - failed to get artifact info")
     @Test
-    public void failedToCheckArtifactFailedToGetArtifactInfo() throws ExecutionException, InterruptedException {
+    public void failedToAddArtifactRisksFailedToGetArtifactInfo() throws ExecutionException, InterruptedException {
 
         var fileLayoutInfo = CreateFileLayoutInfoMock();
 
@@ -249,17 +266,18 @@ public class ArtifactCheckerTests {
         when(_scaHttpClient.getArtifactInformation(ArtifactType, ArtifactName, ArtifactVersion))
                 .thenThrow(exception);
 
-        var artifactChecker = _injector.getInstance(ArtifactChecker.class);
+        var ArtifactRisksFiller = _injector.getInstance(ArtifactRisksFiller.class);
 
-        artifactChecker.checkArtifact(_mainRepoPath);
+        var result = ArtifactRisksFiller.addArtifactRisks(_mainRepoPath, new ArrayList<>(List.of(_mainRepoPath)));
 
+        Assertions.assertFalse(result);
         Mockito.verify(_logger, times(1)).error(Mockito.argThat(s -> s.contains(exception.getMessage())));
         Mockito.verify(_repositories, times(0)).setProperty(isA(RepoPath.class), isA(String.class), isA(String.class));
     }
 
     @DisplayName("Failed to check artifact - failed to get artifact info artifact not found")
     @Test
-    public void failedToCheckArtifactFailedToGetArtifactInfoArtifactNotFound() throws ExecutionException, InterruptedException {
+    public void failedToAddArtifactRisksFailedToGetArtifactInfoArtifactNotFound() throws ExecutionException, InterruptedException {
 
         var fileLayoutInfo = CreateFileLayoutInfoMock();
 
@@ -274,17 +292,18 @@ public class ArtifactCheckerTests {
         when(_scaHttpClient.getArtifactInformation(ArtifactType, ArtifactName, ArtifactVersion))
                 .thenThrow(exception);
 
-        var artifactChecker = _injector.getInstance(ArtifactChecker.class);
+        var ArtifactRisksFiller = _injector.getInstance(ArtifactRisksFiller.class);
 
-        artifactChecker.checkArtifact(_mainRepoPath);
+        var result = ArtifactRisksFiller.addArtifactRisks(_mainRepoPath, new ArrayList<>(List.of(_mainRepoPath)));
 
+        Assertions.assertFalse(result);
         Mockito.verify(_logger, times(1)).error(Mockito.argThat(s -> s.contains(exception.getMessage())));
         Mockito.verify(_repositories, never()).setProperty(isA(RepoPath.class), isA(String.class), isA(String.class));
     }
 
     @DisplayName("Failed to check artifact - failed to get artifact aggregation risk")
     @Test
-    public void failedToCheckArtifactFailedToGetAggregationRisk() throws ExecutionException, InterruptedException {
+    public void failedToAddArtifactRisksFailedToGetAggregationRisk() throws ExecutionException, InterruptedException {
 
         var fileLayoutInfo = CreateFileLayoutInfoMock();
 
@@ -303,12 +322,13 @@ public class ArtifactCheckerTests {
         when(_scaHttpClient.getRiskAggregationOfArtifact(artifactInfo.getPackageType(), artifactInfo.getName(), artifactInfo.getVersion()))
                 .thenThrow(exception);
 
-        var artifactChecker = _injector.getInstance(ArtifactChecker.class);
+        var ArtifactRisksFiller = _injector.getInstance(ArtifactRisksFiller.class);
 
-        artifactChecker.checkArtifact(_mainRepoPath);
+        var result = ArtifactRisksFiller.addArtifactRisks(_mainRepoPath, new ArrayList<>(List.of(_mainRepoPath)));
 
+        Assertions.assertFalse(result);
         Mockito.verify(_logger, times(1)).error(Mockito.argThat(s -> s.contains(exception.getMessage())));
-        Mockito.verify(_repositories, times(1)).setProperty(isA(RepoPath.class), isA(String.class), isA(String.class));
+        Mockito.verify(_repositories, times(0)).setProperty(isA(RepoPath.class), isA(String.class), isA(String.class));
     }
 
     private FileLayoutInfo CreateFileLayoutInfoMock(){
@@ -352,5 +372,20 @@ public class ArtifactCheckerTests {
 
         Mockito.verify(_logger, never()).warn(isA(String.class));
         Mockito.verify(_logger, never()).warn(isA(String.class), isA(Exception.class));
+    }
+
+    private void getAllCxProperties(RepoPath repoPath, String scanDate) {
+        var properties = Mockito.mock(org.artifactory.md.Properties.class);
+
+        when(properties.containsKey(PropertiesConstants.TOTAL_RISKS_COUNT)).thenReturn(true);
+        when(properties.containsKey(PropertiesConstants.LOW_RISKS_COUNT)).thenReturn(true);
+        when(properties.containsKey(PropertiesConstants.MEDIUM_RISKS_COUNT)).thenReturn(true);
+        when(properties.containsKey(PropertiesConstants.HIGH_RISKS_COUNT)).thenReturn(true);
+        when(properties.containsKey(PropertiesConstants.RISK_SCORE)).thenReturn(true);
+        when(properties.containsKey(PropertiesConstants.RISK_LEVEL)).thenReturn(true);
+        when(properties.containsKey(PropertiesConstants.LAST_SCAN)).thenReturn(true);
+        when(properties.getFirst(PropertiesConstants.LAST_SCAN)).thenReturn(scanDate);
+
+        when(_repositories.getProperties(repoPath)).thenReturn(properties);
     }
 }
