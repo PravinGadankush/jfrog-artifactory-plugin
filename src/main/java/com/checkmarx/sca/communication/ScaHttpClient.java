@@ -1,5 +1,6 @@
 package com.checkmarx.sca.communication;
 
+import com.checkmarx.sca.PackageManager;
 import com.checkmarx.sca.communication.exceptions.UnexpectedResponseBodyException;
 import com.checkmarx.sca.communication.exceptions.UnexpectedResponseCodeException;
 import com.checkmarx.sca.configuration.ConfigurationEntry;
@@ -14,9 +15,11 @@ import org.jetbrains.annotations.NotNull;
 import javax.annotation.Nonnull;
 import java.lang.reflect.Type;
 import java.net.URI;
+import java.net.URLEncoder;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.nio.charset.StandardCharsets;
 import java.util.concurrent.ExecutionException;
 
 import static java.lang.String.format;
@@ -37,15 +40,25 @@ public class ScaHttpClient {
         _httpClient = HttpClient.newHttpClient();
     }
 
-    public ArtifactInfo getArtifactInformation(String packageType, String name, String version) throws ExecutionException, InterruptedException {
+    private HttpResponse<String> getArtifactInfoResponse(String packageType, String name, String version) throws ExecutionException, InterruptedException {
         var request = getArtifactInfoRequest(packageType, name, version);
 
         var responseFuture = _httpClient.sendAsync(request, HttpResponse.BodyHandlers.ofString());
 
-        var artifactResponse = responseFuture.get();
+        return responseFuture.get();
+    }
 
-        if (artifactResponse.statusCode() == 404)
-            throw new UnexpectedResponseCodeException(artifactResponse.statusCode());
+    public ArtifactInfo getArtifactInformation(String packageType, String name, String version) throws ExecutionException, InterruptedException {
+
+        var artifactResponse = getArtifactInfoResponse(packageType, name, version);
+
+        if (artifactResponse.statusCode() == 404) {
+            if (packageType.equals(PackageManager.PYPI.packageType())) {
+                artifactResponse = PyPiRetry(packageType, name, version);
+            } else {
+                throw new UnexpectedResponseCodeException(artifactResponse.statusCode());
+            }
+        }
 
         if (artifactResponse.statusCode() != 200)
             throw new UnexpectedResponseCodeException(artifactResponse.statusCode());
@@ -104,6 +117,9 @@ public class ScaHttpClient {
 
     private HttpRequest getArtifactInfoRequest(@NotNull String packageType, @NotNull String name, @NotNull String version) {
 
+        name = URLEncoder.encode(name, StandardCharsets.UTF_8);
+        version = URLEncoder.encode(version, StandardCharsets.UTF_8);
+
         var artifactPath = format("public/packages/%s/%s/%s", packageType, name, version);
 
         var request = HttpRequest.newBuilder(URI.create(format("%s%s", _apiUrl, artifactPath)))
@@ -112,5 +128,26 @@ public class ScaHttpClient {
                 .build();
 
         return request;
+    }
+
+    private HttpResponse<String> PyPiRetry(String packageType, String name, String version) throws ExecutionException, InterruptedException {
+
+        String newName;
+        if(name.contains("-")){
+            newName = name.replaceAll("-", "_");
+        }
+        else if (name.contains("_")){
+            newName = name.replaceAll("_", "-");
+        } else {
+            throw new UnexpectedResponseCodeException(404);
+        }
+
+        var artifactResponse = getArtifactInfoResponse(packageType, newName, version);
+
+        if (artifactResponse.statusCode() == 404) {
+            throw new UnexpectedResponseCodeException(artifactResponse.statusCode());
+        }
+
+        return artifactResponse;
     }
 }

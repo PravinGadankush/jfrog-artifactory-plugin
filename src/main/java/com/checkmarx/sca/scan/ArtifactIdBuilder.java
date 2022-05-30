@@ -1,6 +1,5 @@
 package com.checkmarx.sca.scan;
 
-import com.checkmarx.sca.IPackageManager;
 import com.checkmarx.sca.PackageManager;
 import com.checkmarx.sca.models.ArtifactId;
 import com.google.inject.Inject;
@@ -27,7 +26,7 @@ public class ArtifactIdBuilder {
             return new ArtifactId(packageManager.packageType(), name, revision);
         }
 
-        if (fileLayoutInfo.isValid()) {
+        if (fileLayoutInfo.isValid() && packageManager != PackageManager.NPM) {
             return getArtifactIdOfValidLayout(fileLayoutInfo, packageManager, name, revision);
         }
 
@@ -51,36 +50,33 @@ public class ArtifactIdBuilder {
 
     private ArtifactId tryToUseRegex(RepoPath repoPath, PackageManager packageManager) {
         try{
+            String regex;
             switch (packageManager) {
+                case NPM:
+                    regex = "(?<name>.+)\\/-\\/.+-(?<version>\\d+\\.\\d+\\.\\d+.*)\\.tgz";
+                    break;
                 case PYPI:
-                    return pythonParse(repoPath, packageManager);
+                    regex = ".+/(?<name>.+)-(?<version>\\d+(?:\\.[A-Za-z0-9]+)*).*\\.(?:whl|egg|zip|tar\\.gz)";
+                    break;
                 case NUGET:
-                    return nugetParse(repoPath, packageManager);
+                    regex = "(?<name>.*?)\\.(?<version>(?:\\.?[0-9]+){3,}(?:[-a-z]+)?)\\.nupkg";
+                    break;
                 default:
                     _logger.info(format("Trying to parse RepoPath through regex but packageType is not supported. PackageType: %s, Artifact Name: %s", packageManager.packageType(), repoPath.getName()));
                     _logger.debug(format("Path not supported by regex. Artifact path: %s", repoPath.getPath()));
+                    return new ArtifactId(packageManager.packageType(), null, null);
             }
+
+            return parseRepoPath(repoPath, packageManager, regex);
         } catch (Exception ex) {
             _logger.error(format("There was a problem trying to use a Regex to parse the artifact path. Artifact path: %s", repoPath.getPath()));
             _logger.debug("Exception", ex);
+            return new ArtifactId(packageManager.packageType(), null, null);
         }
-
-        return new ArtifactId(packageManager.packageType(), null, null);
     }
 
-    public ArtifactId pythonParse(RepoPath repoPath, PackageManager packageManager) {
-        Pattern pattern = Pattern.compile(".+/(?<name>.+)-(?<version>\\d+(?:\\.[A-Za-z0-9]+)*).*\\.(?:whl|egg|zip|tar\\.gz)");
-        Matcher matcher = pattern.matcher(repoPath.getPath());
-
-        if (matcher.matches()) {
-            return new ArtifactId(packageManager.packageType(), matcher.group("name"), matcher.group("version"));
-        }
-
-        return new ArtifactId(packageManager.packageType(), null, null);
-    }
-
-    public ArtifactId nugetParse(RepoPath repoPath, IPackageManager packageManager) {
-        Pattern pattern = Pattern.compile("(?<name>.*?)\\.(?<version>(?:\\.?[0-9]+){3,}(?:[-a-z]+)?)\\.nupkg");
+    public ArtifactId parseRepoPath(RepoPath repoPath, PackageManager packageManager, String regex) {
+        Pattern pattern = Pattern.compile(regex);
         Matcher matcher = pattern.matcher(repoPath.getPath());
 
         if (matcher.matches()) {

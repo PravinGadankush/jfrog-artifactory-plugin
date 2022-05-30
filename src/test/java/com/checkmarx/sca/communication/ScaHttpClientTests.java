@@ -63,6 +63,32 @@ public class ScaHttpClientTests {
         Assertions.assertEquals("Npm-lodash-0.2.1", artifactInfo.getId().getIdentifier());
     }
 
+    @DisplayName("Get artifact information with success after PyPi retry")
+    @Test
+    public void getArtifactInformationWithSuccessAfterPyPiRetry() throws ExecutionException, InterruptedException {
+
+        this.wireMockServer.stubFor(
+                WireMock.get("/public/packages/python/google_parser/0.0.135")
+                        .willReturn(aResponse().withStatus(404))
+        );
+
+        this.wireMockServer.stubFor(
+                WireMock.get("/public/packages/python/google-parser/0.0.135")
+                        .willReturn(ok()
+                                .withHeader("Content-Type", "application/json; charset=UTF-8")
+                                .withBody("{\"id\":{\"identifier\":\"Python-google-parser-0.0.135\"},\"name\":\"google-parser\",\"version\":\"0.0.135\",\"type\":\"Python\",\"releaseDate\":\"2021-11-22T11:43:16\",\"description\":\"\",\"repositoryUrl\":\"\",\"binaryUrl\":\"\",\"projectUrl\":\"https://pypi.org/project/google-parser/\",\"bugsUrl\":\"\",\"sourceUrl\":\"\",\"projectHomePage\":\"\",\"homePage\":\"https://github.com/KokocGroup/google-parser\",\"license\":\"\",\"summary\":\"Convert html to snippets\",\"url\":\"https://pypi.org/project/google-parser/\",\"owner\":\"\"}"))
+        );
+
+        var injector = CreateAppInjectorForTests();
+
+        var scaHttpClient = injector.getInstance(ScaHttpClient.class);
+
+        var artifactInfo = scaHttpClient.getArtifactInformation("python", "google_parser", "0.0.135");
+
+        Assertions.assertNotNull(artifactInfo);
+        Assertions.assertEquals("Python-google-parser-0.0.135", artifactInfo.getId().getIdentifier());
+    }
+
     @DisplayName("Failed to get artifact information - Not found")
     @Test
     public void failedToGetArtifactInformationNotFound() {

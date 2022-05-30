@@ -53,8 +53,7 @@ public class ArtifactRisksFillerTests {
     public void beforeEach() {
         _mainRepoPath = Mockito.mock(RepoPath.class);
         when(_mainRepoPath.getRepoKey()).thenReturn(RepoKey);
-        when(_mainRepoPath.getName()).thenReturn(format("%s-%s", ArtifactName, ArtifactVersion));
-        when(_mainRepoPath.getPath()).thenReturn(format("%s-%s", ArtifactName, ArtifactVersion));
+        when(_mainRepoPath.getPath()).thenReturn(format("%1$s/-/%1$s-%2$s.tgz", ArtifactName, ArtifactVersion));
 
         _logger = Mockito.mock(Logger.class);
         _repositories = Mockito.mock(Repositories.class);
@@ -333,9 +332,7 @@ public class ArtifactRisksFillerTests {
 
     private FileLayoutInfo CreateFileLayoutInfoMock(){
         var fileLayoutInfo = Mockito.mock(FileLayoutInfo.class);
-        when(fileLayoutInfo.getBaseRevision()).thenReturn(ArtifactVersion);
-        when(fileLayoutInfo.getModule()).thenReturn(ArtifactName);
-        when(fileLayoutInfo.isValid()).thenReturn(true);
+        when(fileLayoutInfo.isValid()).thenReturn(false);
         return fileLayoutInfo;
     }
 

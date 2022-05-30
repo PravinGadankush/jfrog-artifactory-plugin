@@ -11,6 +11,8 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.mockito.Mockito;
 import org.slf4j.Logger;
 
@@ -37,22 +39,22 @@ public class ArtifactIdBuilderTests {
     }
 
     @DisplayName("Get artifact id with success - NPM")
-    @Test
-    public void getNpmArtifactIdWithSuccess() {
+    @ParameterizedTest
+    @CsvSource({"@types/fs-extra,9.0.13", "http,0.0.1-security"})
+    public void getNpmArtifactIdWithSuccessWithComplexVersion(String name, String version) {
 
         var artifactIdBuilder = _injector.getInstance(ArtifactIdBuilder.class);
         var fileLayoutInfo = Mockito.mock(FileLayoutInfo.class);
 
-        when(fileLayoutInfo.getBaseRevision()).thenReturn("1.2.3");
-        when(fileLayoutInfo.getModule()).thenReturn("test");
         when(fileLayoutInfo.isValid()).thenReturn(true);
 
         var repoPath = Mockito.mock(RepoPath.class);
+        when(repoPath.getPath()).thenReturn(String.format("%1$s/-/%1$s-%2$s.tgz", name, version));
 
         var id = artifactIdBuilder.getArtifactId(fileLayoutInfo, repoPath, PackageManager.NPM);
 
-        Assertions.assertEquals("test", id.Name);
-        Assertions.assertEquals("1.2.3", id.Version);
+        Assertions.assertEquals(name, id.Name);
+        Assertions.assertEquals(version, id.Version);
         Assertions.assertEquals("npm", id.PackageType);
     }
 

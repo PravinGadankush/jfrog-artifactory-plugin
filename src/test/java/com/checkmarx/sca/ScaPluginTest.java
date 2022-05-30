@@ -46,7 +46,7 @@ public class ScaPluginTest {
         var repoPath = Mockito.mock(RepoPath.class);
         when(repoPath.getRepoKey()).thenReturn(RepoKey);
         when(repoPath.getName()).thenReturn(format("%s-%s", ArtifactName, ArtifactVersion));
-        when(repoPath.getPath()).thenReturn(format("%s/-/%s-%s.tgz\"", ArtifactName, ArtifactName, ArtifactVersion));
+        when(repoPath.getPath()).thenReturn(format("%s/-/%s-%s.tgz", ArtifactName, ArtifactName, ArtifactVersion));
 
         var localRepositoryConfiguration = Mockito.mock(LocalRepositoryConfiguration.class);
         when(localRepositoryConfiguration.getPackageType()).thenReturn(ArtifactType);
@@ -91,7 +91,7 @@ public class ScaPluginTest {
         var virtualPath = Mockito.mock(RepoPath.class);
         when(virtualPath.getRepoKey()).thenReturn(RepoKey);
         when(virtualPath.getName()).thenReturn(format("%s-%s", ArtifactName, ArtifactVersion));
-        when(virtualPath.getPath()).thenReturn(format("%s/-/%s-%s.tgz\"", ArtifactName, ArtifactName, ArtifactVersion));
+        when(virtualPath.getPath()).thenReturn(format("%s/-/%s-%s.tgz", ArtifactName, ArtifactName, ArtifactVersion));
 
         var repoPath = Mockito.mock(RepoPath.class);
         var virtualRepositoryConfiguration = Mockito.mock(VirtualRepositoryConfiguration.class);
@@ -144,7 +144,7 @@ public class ScaPluginTest {
         var repoPath = Mockito.mock(RepoPath.class);
         when(repoPath.getRepoKey()).thenReturn(RepoKey);
         when(repoPath.getName()).thenReturn(format("%s-%s", ArtifactName, ArtifactVersion));
-        when(repoPath.getPath()).thenReturn(format("%s/-/%s-%s.tgz\"", ArtifactName, ArtifactName, ArtifactVersion));
+        when(repoPath.getPath()).thenReturn(format("%s/-/%s-%s.tgz", ArtifactName, ArtifactName, ArtifactVersion));
 
         var localRepositoryConfiguration = Mockito.mock(LocalRepositoryConfiguration.class);
         when(localRepositoryConfiguration.getPackageType()).thenReturn(ArtifactType);
@@ -187,7 +187,7 @@ public class ScaPluginTest {
         var repoPath = Mockito.mock(RepoPath.class);
         when(repoPath.getRepoKey()).thenReturn(RepoKey);
         when(repoPath.getName()).thenReturn(format("%s-%s", ArtifactName, ArtifactVersion));
-        when(repoPath.getPath()).thenReturn(format("%s/-/%s-%s.tgz\"", ArtifactName, ArtifactName, ArtifactVersion));
+        when(repoPath.getPath()).thenReturn(format("%s/-/%s-%s.tgz", ArtifactName, ArtifactName, ArtifactVersion));
 
         var localRepositoryConfiguration = Mockito.mock(LocalRepositoryConfiguration.class);
         when(localRepositoryConfiguration.getPackageType()).thenReturn(ArtifactType);
