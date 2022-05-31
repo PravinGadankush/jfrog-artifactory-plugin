@@ -3,6 +3,8 @@ package com.checkmarx.sca.communication;
 import com.checkmarx.sca.PackageManager;
 import com.checkmarx.sca.communication.exceptions.UnexpectedResponseBodyException;
 import com.checkmarx.sca.communication.exceptions.UnexpectedResponseCodeException;
+import com.checkmarx.sca.scan.fallbacks.ComposerFallback;
+import com.checkmarx.sca.communication.fallbacks.PyPiFallback;
 import com.checkmarx.sca.configuration.ConfigurationEntry;
 import com.checkmarx.sca.configuration.PluginConfiguration;
 import com.checkmarx.sca.models.ArtifactInfo;
@@ -30,6 +32,9 @@ public class ScaHttpClient {
     private final String _apiUrl;
 
     @Inject
+    private PyPiFallback _pyPiFallback;
+
+    @Inject
     public ScaHttpClient(@Nonnull PluginConfiguration configuration) {
         var apiUrl = configuration.getPropertyOrDefault(ConfigurationEntry.API_URL);
         if (!apiUrl.endsWith("/")) {
@@ -53,11 +58,7 @@ public class ScaHttpClient {
         var artifactResponse = getArtifactInfoResponse(packageType, name, version);
 
         if (artifactResponse.statusCode() == 404) {
-            if (packageType.equals(PackageManager.PYPI.packageType())) {
-                artifactResponse = PyPiRetry(packageType, name, version);
-            } else {
-                throw new UnexpectedResponseCodeException(artifactResponse.statusCode());
-            }
+            artifactResponse = TryToFallback(artifactResponse, packageType, name, version);
         }
 
         if (artifactResponse.statusCode() != 200)
@@ -106,13 +107,11 @@ public class ScaHttpClient {
 
         String body = format("{\"packageName\":\"%s\",\"version\":\"%s\",\"packageManager\":\"%s\"}", name, version, packageType);
 
-        var request = HttpRequest.newBuilder(URI.create(format("%s%s", _apiUrl, "public/risk-aggregation/aggregated-risks")))
+        return HttpRequest.newBuilder(URI.create(format("%s%s", _apiUrl, "public/risk-aggregation/aggregated-risks")))
                 .header("content-type", "application/json")
                 .header("User-Agent", UserAgent)
                 .POST(HttpRequest.BodyPublishers.ofString(body))
                 .build();
-
-        return request;
     }
 
     private HttpRequest getArtifactInfoRequest(@NotNull String packageType, @NotNull String name, @NotNull String version) {
@@ -122,24 +121,21 @@ public class ScaHttpClient {
 
         var artifactPath = format("public/packages/%s/%s/%s", packageType, name, version);
 
-        var request = HttpRequest.newBuilder(URI.create(format("%s%s", _apiUrl, artifactPath)))
+        return HttpRequest.newBuilder(URI.create(format("%s%s", _apiUrl, artifactPath)))
                 .header("User-Agent", UserAgent)
                 .GET()
                 .build();
-
-        return request;
     }
 
-    private HttpResponse<String> PyPiRetry(String packageType, String name, String version) throws ExecutionException, InterruptedException {
+    private HttpResponse<String> TryToFallback(HttpResponse<String> previousResponse, String packageType, String name, String version) throws ExecutionException, InterruptedException {
 
-        String newName;
-        if(name.contains("-")){
-            newName = name.replaceAll("-", "_");
+        String newName = null;
+        if (packageType.equals(PackageManager.PYPI.packageType())) {
+            newName = _pyPiFallback.applyFallback(name);
         }
-        else if (name.contains("_")){
-            newName = name.replaceAll("_", "-");
-        } else {
-            throw new UnexpectedResponseCodeException(404);
+
+        if (newName == null) {
+            throw new UnexpectedResponseCodeException(previousResponse.statusCode());
         }
 
         var artifactResponse = getArtifactInfoResponse(packageType, newName, version);
@@ -150,4 +146,6 @@ public class ScaHttpClient {
 
         return artifactResponse;
     }
+
+
 }

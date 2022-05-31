@@ -148,9 +148,26 @@ public class ArtifactIdBuilderTests {
         when(repoPath.getPath()).thenReturn(path);
 
         var packageManager = PackageManager.COCOAPODS;
-        var id = artifactIdBuilder.getArtifactId(fileLayoutInfo, repoPath, packageManager);
+        artifactIdBuilder.getArtifactId(fileLayoutInfo, repoPath, packageManager);
 
         Mockito.verify(_logger, times(1)).info(Mockito.argThat(s -> s.contains(packageManager.packageType())));
         Mockito.verify(_logger, times(1)).debug(Mockito.argThat(s -> s.contains(path)));
+    }
+
+    @DisplayName("Get artifact id with success - Composer")
+    @Test
+    public void getComposerArtifactIdWithSuccess() {
+
+        var artifactIdBuilder = _injector.getInstance(ArtifactIdBuilder.class);
+        var fileLayoutInfo = Mockito.mock(FileLayoutInfo.class);
+
+        var repoPath = Mockito.mock(RepoPath.class);
+        when(repoPath.getPath()).thenReturn("zircote/swagger-php/commits/9d172471e56433b5c7061006b9a766f262a3edfd/swagger-php-9d172471e56433b5c7061006b9a766f262a3edfd.zip");
+
+        var id = artifactIdBuilder.getArtifactId(fileLayoutInfo, repoPath, PackageManager.COMPOSER);
+
+        Assertions.assertEquals("zircote/swagger-php", id.Name);
+        Assertions.assertEquals("3.1.0", id.Version);
+        Assertions.assertEquals("php", id.PackageType);
     }
 }

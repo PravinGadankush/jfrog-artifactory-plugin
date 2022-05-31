@@ -15,7 +15,9 @@ import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import org.slf4j.Logger;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
 
 import static com.checkmarx.sca.PropertiesConstants.*;
 import static com.checkmarx.sca.configuration.ConfigurationEntry.SECURITY_RISK_THRESHOLD;

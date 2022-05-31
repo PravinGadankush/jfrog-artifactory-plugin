@@ -14,23 +14,28 @@ import java.util.regex.Pattern;
 import static java.lang.String.format;
 
 public class ArtifactIdBuilder {
-
     @Inject
     private Logger _logger;
+
+    @Inject
+    private ComposerArtifactIdBuilder _composerArtifactIdBuilder;
 
     public ArtifactId getArtifactId(@Nonnull FileLayoutInfo fileLayoutInfo, @Nonnull RepoPath repoPath, @Nonnull PackageManager packageManager){
         var revision = fileLayoutInfo.getBaseRevision();
         var name = fileLayoutInfo.getModule();
 
-        if (packageManager == PackageManager.NOTSUPPORTED) {
-            return new ArtifactId(packageManager.packageType(), name, revision);
-        }
-
         if (fileLayoutInfo.isValid() && packageManager != PackageManager.NPM) {
             return getArtifactIdOfValidLayout(fileLayoutInfo, packageManager, name, revision);
         }
 
-        return tryToUseRegex(repoPath, packageManager);
+        switch (packageManager) {
+            case NOTSUPPORTED:
+                return new ArtifactId(packageManager.packageType(), name, revision);
+            case COMPOSER:
+                return _composerArtifactIdBuilder.generateArtifactId(repoPath, packageManager);
+            default:
+                return tryToUseRegex(repoPath, packageManager);
+        }
     }
 
     private ArtifactId getArtifactIdOfValidLayout(FileLayoutInfo fileLayoutInfo, PackageManager packageManager, String name, String revision) {

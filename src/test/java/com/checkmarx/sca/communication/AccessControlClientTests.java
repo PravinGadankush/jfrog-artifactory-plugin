@@ -148,7 +148,7 @@ public class AccessControlClientTests {
 
         var accessControlClient = injector.getInstance(AccessControlClient.class);
 
-        Assertions.assertThrows(UserIsNotAuthenticatedException.class, () -> accessControlClient.GetAuthorizationHeader());
+        Assertions.assertThrows(UserIsNotAuthenticatedException.class, accessControlClient::GetAuthorizationHeader);
     }
 
     @DisplayName("Get authorization header with success - refresh token")
@@ -222,7 +222,7 @@ public class AccessControlClientTests {
         var result = accessControlClient.Authenticate(accessControlCredentials);
 
         Assertions.assertTrue(result);
-        Assertions.assertThrows(FailedToRefreshTokenException.class, () -> accessControlClient.GetAuthorizationHeader());
+        Assertions.assertThrows(FailedToRefreshTokenException.class, accessControlClient::GetAuthorizationHeader);
     }
 
     private Injector CreateAppInjectorForTests(){

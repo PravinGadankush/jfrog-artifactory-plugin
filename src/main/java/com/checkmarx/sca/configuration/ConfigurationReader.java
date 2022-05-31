@@ -1,11 +1,12 @@
 package com.checkmarx.sca.configuration;
 
+import org.slf4j.Logger;
+
 import javax.annotation.Nonnull;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.Properties;
-import org.slf4j.Logger;
 
 import static java.lang.String.format;
 

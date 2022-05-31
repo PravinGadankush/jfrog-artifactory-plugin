@@ -1,6 +1,5 @@
 package com.checkmarx.sca.configuration;
 
-import com.google.inject.Inject;
 import org.slf4j.Logger;
 
 import javax.annotation.Nonnull;

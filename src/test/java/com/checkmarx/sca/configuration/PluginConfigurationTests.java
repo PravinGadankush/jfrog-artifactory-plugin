@@ -180,7 +180,7 @@ public class PluginConfigurationTests {
 
         final var configuration = injector.getInstance(PluginConfiguration.class);
 
-        var exception = Assertions.assertThrows(IllegalArgumentException.class, () -> configuration.validate());
+        var exception = Assertions.assertThrows(IllegalArgumentException.class, configuration::validate);
 
         Assertions.assertTrue(exception.getMessage().contains(SecurityRiskThreshold.class.getName()));
     }

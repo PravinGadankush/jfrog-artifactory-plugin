@@ -139,12 +139,10 @@ public class AccessControlClient {
                 .map(e -> e.getKey() + "=" + URLEncoder.encode(e.getValue(), StandardCharsets.UTF_8))
                 .collect(Collectors.joining("&"));
 
-        var request = HttpRequest.newBuilder(URI.create(format("%s%s", _authenticationUrl, TokenEndpointPath)))
+        return HttpRequest.newBuilder(URI.create(format("%s%s", _authenticationUrl, TokenEndpointPath)))
                 .header("content-type", "application/x-www-form-urlencoded")
                 .POST(HttpRequest.BodyPublishers.ofString(form))
                 .build();
-
-        return request;
     }
 
     private boolean RefreshTokenAsync()
