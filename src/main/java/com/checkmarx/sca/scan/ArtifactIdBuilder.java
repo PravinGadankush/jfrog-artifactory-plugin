@@ -24,7 +24,7 @@ public class ArtifactIdBuilder {
         var revision = fileLayoutInfo.getBaseRevision();
         var name = fileLayoutInfo.getModule();
 
-        if (fileLayoutInfo.isValid() && packageManager != PackageManager.NPM) {
+        if (PackageManager.MAVEN.packageType().equalsIgnoreCase(packageManager.packageType())) {
             return getArtifactIdOfValidLayout(fileLayoutInfo, packageManager, name, revision);
         }
 
@@ -39,15 +39,13 @@ public class ArtifactIdBuilder {
     }
 
     private ArtifactId getArtifactIdOfValidLayout(FileLayoutInfo fileLayoutInfo, PackageManager packageManager, String name, String revision) {
-        if (packageManager.packageType().equalsIgnoreCase(PackageManager.MAVEN.packageType())) {
-            var organization = fileLayoutInfo.getOrganization();
-            var fileIntegrationRevision = fileLayoutInfo.getFileIntegrationRevision();
+        var organization = fileLayoutInfo.getOrganization();
+        var fileIntegrationRevision = fileLayoutInfo.getFileIntegrationRevision();
 
-            name = String.format("%s:%s", organization, name);
+        name = String.format("%s:%s", organization, name);
 
-            if (fileIntegrationRevision != null) {
-                revision = String.format("%s-%s", revision, fileIntegrationRevision);
-            }
+        if (fileIntegrationRevision != null) {
+            revision = String.format("%s-%s", revision, fileIntegrationRevision);
         }
 
         return new ArtifactId(packageManager.packageType(), name, revision);
@@ -66,13 +64,20 @@ public class ArtifactIdBuilder {
                 case NUGET:
                     regex = "(?<name>.*?)\\.(?<version>(?:\\.?[0-9]+){3,}(?:[-a-z]+)?)\\.nupkg";
                     break;
+                case GO:
+                    var path = repoPath.getPath();
+
+                    path = path.replaceAll("(\\+incompatible)?(\\.mod|\\.info|\\.zip)", "");
+
+                    regex = "(?<name>.*?)\\/@v\\/(?<version>.*)";
+                    return parseRepoPath(path, packageManager, regex);
                 default:
                     _logger.info(format("Trying to parse RepoPath through regex but packageType is not supported. PackageType: %s, Artifact Name: %s", packageManager.packageType(), repoPath.getName()));
                     _logger.debug(format("Path not supported by regex. Artifact path: %s", repoPath.getPath()));
                     return new ArtifactId(packageManager.packageType(), null, null);
             }
 
-            return parseRepoPath(repoPath, packageManager, regex);
+            return parseRepoPath(repoPath.getPath(), packageManager, regex);
         } catch (Exception ex) {
             _logger.error(format("There was a problem trying to use a Regex to parse the artifact path. Artifact path: %s", repoPath.getPath()));
             _logger.debug("Exception", ex);
@@ -80,9 +85,9 @@ public class ArtifactIdBuilder {
         }
     }
 
-    public ArtifactId parseRepoPath(RepoPath repoPath, PackageManager packageManager, String regex) {
+    public ArtifactId parseRepoPath(String path, PackageManager packageManager, String regex) {
         Pattern pattern = Pattern.compile(regex);
-        Matcher matcher = pattern.matcher(repoPath.getPath());
+        Matcher matcher = pattern.matcher(path);
 
         if (matcher.matches()) {
             return new ArtifactId(packageManager.packageType(), matcher.group("name"), matcher.group("version"));

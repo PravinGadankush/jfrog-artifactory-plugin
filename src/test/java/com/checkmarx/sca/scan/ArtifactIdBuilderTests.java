@@ -170,4 +170,29 @@ public class ArtifactIdBuilderTests {
         Assertions.assertEquals("3.1.0", id.Version);
         Assertions.assertEquals("php", id.PackageType);
     }
+
+    @DisplayName("Get artifact id with success - GO")
+    @ParameterizedTest
+    @CsvSource(
+            {
+                "h12.io/socks/@v/v1.0.1.zip, h12.io/socks,v1.0.1",
+                "github.com/google/go-github/@v/v17.0.0+incompatible.zip, github.com/google/go-github, v17.0.0",
+                "github.com/golang/glog/@v/v0.0.0-20160126235308-23def4e6c14b.zip, github.com/golang/glog, v0.0.0-20160126235308-23def4e6c14b"
+            })
+    public void getGoArtifactIdWithSuccess(String path, String name, String version) {
+
+        var artifactIdBuilder = _injector.getInstance(ArtifactIdBuilder.class);
+        var fileLayoutInfo = Mockito.mock(FileLayoutInfo.class);
+
+        when(fileLayoutInfo.isValid()).thenReturn(true);
+
+        var repoPath = Mockito.mock(RepoPath.class);
+        when(repoPath.getPath()).thenReturn(path);
+
+        var id = artifactIdBuilder.getArtifactId(fileLayoutInfo, repoPath, PackageManager.GO);
+
+        Assertions.assertEquals(name, id.Name);
+        Assertions.assertEquals(version, id.Version);
+        Assertions.assertEquals("go", id.PackageType);
+    }
 }

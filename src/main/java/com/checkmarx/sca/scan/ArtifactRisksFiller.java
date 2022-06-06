@@ -78,7 +78,7 @@ public class ArtifactRisksFiller {
             return false;
         }
 
-        _logger.info(format("Started artifact verification. Artifact name: %s", repoPath.getName()));
+        _logger.info(format("Started artifact verification. Artifact name: %s", repoPath.getPath()));
 
         var packageRiskAggregation = scanArtifact(artifactId);
 
@@ -88,7 +88,7 @@ public class ArtifactRisksFiller {
             risksAddedSuccessfully = true;
         }
 
-        _logger.info(format("Ended the artifact verification. Artifact name: %s", repoPath.getName()));
+        _logger.info(format("Ended the artifact verification. Artifact name: %s", repoPath.getPath()));
 
         return risksAddedSuccessfully;
     }
@@ -156,9 +156,11 @@ public class ArtifactRisksFiller {
 
     private boolean FileShouldBeIgnored(RepoPath repoPath, IPackageManager packageManager) {
         var notNugetPackage = packageManager == PackageManager.NUGET && !repoPath.getPath().endsWith(".nupkg");
+        var notGoPackage = packageManager == PackageManager.GO && !repoPath.getPath().endsWith(".zip");
+
         var jsonFile = repoPath.getPath().endsWith(".json");
         var htmlFile = repoPath.getPath().endsWith(".html");
-        return notNugetPackage || jsonFile || htmlFile;
+        return notNugetPackage || notGoPackage || jsonFile || htmlFile;
     }
 
     private PackageRiskAggregation scanArtifact(@Nonnull ArtifactId artifactId) {
