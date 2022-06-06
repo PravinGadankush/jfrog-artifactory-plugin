@@ -154,6 +154,66 @@ public class ArtifactIdBuilderTests {
         Mockito.verify(_logger, times(1)).debug(Mockito.argThat(s -> s.contains(path)));
     }
 
+    @DisplayName("Get artifact id with success - Bower")
+    @ParameterizedTest
+    @CsvSource({
+            "/Font-Awesome-v4.5.0.tar.gz,Font-Awesome,4.5.0",
+            "/Font-Awesome-4.5.0.tar.gz,Font-Awesome,4.5.0"
+    })
+    public void getBowerArtifactIdWithVSuccess(String packagePath, String expectedName, String version){
+        var artifactIdBuilder = _injector.getInstance(ArtifactIdBuilder.class);
+        var fileLayoutInfo = Mockito.mock(FileLayoutInfo.class);
+
+        var repoPath = Mockito.mock(RepoPath.class);
+        when(repoPath.getPath()).thenReturn(packagePath);
+
+        var id = artifactIdBuilder.getArtifactId(fileLayoutInfo, repoPath, PackageManager.BOWER);
+
+        Assertions.assertEquals(expectedName, id.Name);
+        Assertions.assertEquals(version, id.Version);
+        Assertions.assertEquals("npm", id.PackageType);
+    }
+
+    @DisplayName("Get artifact id with success - Ivy")
+    @ParameterizedTest
+    @CsvSource({
+            "org/apache/commons/commons-parent/17/commons-parent-17.pom,org.apache.commons:commons-parent,17",
+            "commons-lang/commons-lang/2.6/commons-lang-2.6.jar,commons-lang:commons-lang,2.6"
+    })
+    public void getIvyArtifactIdWithSuccess(String packagePath, String expectedName, String version){
+        var artifactIdBuilder = _injector.getInstance(ArtifactIdBuilder.class);
+        var fileLayoutInfo = Mockito.mock(FileLayoutInfo.class);
+
+        var repoPath = Mockito.mock(RepoPath.class);
+        when(repoPath.getPath()).thenReturn(packagePath);
+
+        var id = artifactIdBuilder.getArtifactId(fileLayoutInfo, repoPath, PackageManager.IVY);
+
+        Assertions.assertEquals(expectedName, id.Name);
+        Assertions.assertEquals(version, id.Version);
+        Assertions.assertEquals("maven", id.PackageType);
+    }
+
+    @DisplayName("Get artifact id with success - Sbt")
+    @ParameterizedTest
+    @CsvSource({
+            "com/fasterxml/jackson/core/jackson-databind/2.10.1/jackson-databind-2.10.1.pom,com.fasterxml.jackson.core:jackson-databind,2.10.1",
+            "org/scalatestplus/play/scalatestplus-play_2.13/5.0.0/scalatestplus-play_2.13-5.0.0.jar,org.scalatestplus.play:scalatestplus-play_2.13,5.0.0"
+    })
+    public void getSbtArtifactIdWithSuccess(String packagePath, String expectedName, String version){
+        var artifactIdBuilder = _injector.getInstance(ArtifactIdBuilder.class);
+        var fileLayoutInfo = Mockito.mock(FileLayoutInfo.class);
+
+        var repoPath = Mockito.mock(RepoPath.class);
+        when(repoPath.getPath()).thenReturn(packagePath);
+
+        var id = artifactIdBuilder.getArtifactId(fileLayoutInfo, repoPath, PackageManager.SBT);
+
+        Assertions.assertEquals(expectedName, id.Name);
+        Assertions.assertEquals(version, id.Version);
+        Assertions.assertEquals("maven", id.PackageType);
+    }
+
     @DisplayName("Get artifact id with success - Composer")
     @Test
     public void getComposerArtifactIdWithSuccess() {

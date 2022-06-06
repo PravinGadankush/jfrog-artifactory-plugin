@@ -8,6 +8,9 @@ import org.artifactory.repo.RepoPath;
 import org.slf4j.Logger;
 
 import javax.annotation.Nonnull;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -24,7 +27,9 @@ public class ArtifactIdBuilder {
         var revision = fileLayoutInfo.getBaseRevision();
         var name = fileLayoutInfo.getModule();
 
-        if (PackageManager.MAVEN.packageType().equalsIgnoreCase(packageManager.packageType())) {
+        var validFileLayouts = List.of(PackageManager.MAVEN.key(), PackageManager.GRADLE.key());
+
+        if (validFileLayouts.contains(packageManager.key())) {
             return getArtifactIdOfValidLayout(fileLayoutInfo, packageManager, name, revision);
         }
 
@@ -64,6 +69,12 @@ public class ArtifactIdBuilder {
                 case NUGET:
                     regex = "(?<name>.*?)\\.(?<version>(?:\\.?[0-9]+){3,}(?:[-a-z]+)?)\\.nupkg";
                     break;
+                case BOWER:
+                    regex = ".*/(?<name>.+)-v?(?<version>\\d(?:\\.[A-Za-z0-9]+)*).*tar\\.gz";
+                    break;
+                case IVY:
+                case SBT:
+                    return parseMavenRepoPath(repoPath, packageManager);
                 case GO:
                     var path = repoPath.getPath();
 
@@ -90,9 +101,41 @@ public class ArtifactIdBuilder {
         Matcher matcher = pattern.matcher(path);
 
         if (matcher.matches()) {
-            return new ArtifactId(packageManager.packageType(), matcher.group("name"), matcher.group("version"));
+            var name = matcher.group("name");
+            var version = matcher.group("version");
+            LogPackageDebug(path, packageManager, name, version);
+            return new ArtifactId(packageManager.packageType(), name, version);
         }
 
         return new ArtifactId(packageManager.packageType(), null, null);
+    }
+
+    private ArtifactId parseMavenRepoPath(RepoPath repoPath, PackageManager packageManager){
+        var pattern = Pattern.compile("(?<packagePath>.+)/(?<version>\\d+(?:\\.[A-Za-z0-9]+)*).*");
+        var matcher = pattern.matcher(repoPath.getPath());
+
+        if(matcher.matches()){
+            var packagePath = matcher.group("packagePath");
+            var version = matcher.group("version");
+
+            var packagePathArray = packagePath.split("/");
+            var organisation = String.join(".", Arrays.copyOfRange(packagePathArray, 0, packagePathArray.length - 1));
+            var packageName = packagePathArray[packagePathArray.length - 1];
+
+            var name = format("%s:%s", organisation, packageName);
+
+            LogPackageDebug(repoPath.getPath(), packageManager, name, version);
+
+            return new ArtifactId(packageManager.packageType(), name, version);
+       }
+
+        return new ArtifactId(packageManager.packageType(), null, null);
+    }
+
+    private void LogPackageDebug(String repoPath, PackageManager packageManager, String name, String version) {
+        _logger.debug(format("PackageManager: %s", packageManager.key()));
+        _logger.debug(format("RepoPath: %s", repoPath));
+        _logger.debug(format("Parsed name: %s", name));
+        _logger.debug(format("Parsed version: %s", version));
     }
 }
