@@ -75,6 +75,16 @@ public class ArtifactIdBuilder {
                 case IVY:
                 case SBT:
                     return parseMavenRepoPath(repoPath, packageManager);
+                case COCOAPODS:
+                    regex = ".*\\/(?<name>.+)-v?(?<version>\\d(?:\\.[A-Za-z0-9]+)*).*(?:zip|tar\\.gz)";
+                    var tmpId = parseRepoPath(repoPath.getPath(), packageManager, regex);
+
+                    if (tmpId.isInvalid()) {
+                        return tmpId;
+                    }
+
+                    var name = String.format("%s:%s", tmpId.Name, tmpId.Name);
+                    return new ArtifactId(packageManager.packageType(), name, tmpId.Version);
                 case GO:
                     var path = repoPath.getPath();
 

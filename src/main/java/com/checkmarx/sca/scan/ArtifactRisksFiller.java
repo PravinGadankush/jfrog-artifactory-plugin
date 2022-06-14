@@ -157,10 +157,13 @@ public class ArtifactRisksFiller {
     private boolean FileShouldBeIgnored(RepoPath repoPath, IPackageManager packageManager) {
         var notNugetPackage = packageManager == PackageManager.NUGET && !repoPath.getPath().endsWith(".nupkg");
         var notGoPackage = packageManager == PackageManager.GO && !repoPath.getPath().endsWith(".zip");
+        var notCocoaPodsPackage = packageManager == PackageManager.COCOAPODS
+                && !repoPath.getPath().endsWith(".tar.gz")
+                && !repoPath.getPath().endsWith(".zip");
 
         var jsonFile = repoPath.getPath().endsWith(".json");
         var htmlFile = repoPath.getPath().endsWith(".html");
-        return notNugetPackage || notGoPackage || jsonFile || htmlFile;
+        return notNugetPackage || notGoPackage || notCocoaPodsPackage || jsonFile || htmlFile;
     }
 
     private PackageRiskAggregation scanArtifact(@Nonnull ArtifactId artifactId) {

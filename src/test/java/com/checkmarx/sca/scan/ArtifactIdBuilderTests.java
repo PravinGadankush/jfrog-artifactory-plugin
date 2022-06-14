@@ -147,7 +147,10 @@ public class ArtifactIdBuilderTests {
         when(repoPath.getName()).thenReturn("name");
         when(repoPath.getPath()).thenReturn(path);
 
-        var packageManager = PackageManager.COCOAPODS;
+        var packageManager = Mockito.mock(PackageManager.class);
+        when(packageManager.packageType()).thenReturn("");
+        when(packageManager.key()).thenReturn("");
+
         artifactIdBuilder.getArtifactId(fileLayoutInfo, repoPath, packageManager);
 
         Mockito.verify(_logger, times(1)).info(Mockito.argThat(s -> s.contains(packageManager.packageType())));
@@ -254,5 +257,30 @@ public class ArtifactIdBuilderTests {
         Assertions.assertEquals(name, id.Name);
         Assertions.assertEquals(version, id.Version);
         Assertions.assertEquals("go", id.PackageType);
+    }
+
+    @DisplayName("Get artifact id with success - CocoaPods")
+    @ParameterizedTest
+    @CsvSource(
+            {
+                "facebook/KVOController/tags/v1.2.0/KVOController-v1.2.0.tar.gz, KVOController:KVOController, 1.2.0",
+                "facebook/KVOController/tags/v1.2.0/KVOController-v1.2.0.zip, KVOController:KVOController, 1.2.0",
+                "facebook/KVOController/tags/v1.2.0/KVOController-1.2.0.tar.gz, KVOController:KVOController, 1.2.0"
+            })
+    public void getCocoaPodsArtifactIdWithSuccess(String path, String name, String version) {
+
+        var artifactIdBuilder = _injector.getInstance(ArtifactIdBuilder.class);
+        var fileLayoutInfo = Mockito.mock(FileLayoutInfo.class);
+
+        when(fileLayoutInfo.isValid()).thenReturn(true);
+
+        var repoPath = Mockito.mock(RepoPath.class);
+        when(repoPath.getPath()).thenReturn(path);
+
+        var id = artifactIdBuilder.getArtifactId(fileLayoutInfo, repoPath, PackageManager.COCOAPODS);
+
+        Assertions.assertEquals(name, id.Name);
+        Assertions.assertEquals(version, id.Version);
+        Assertions.assertEquals("ios", id.PackageType);
     }
 }
