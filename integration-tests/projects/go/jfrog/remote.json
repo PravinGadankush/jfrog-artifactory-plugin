@@ -1,0 +1,8 @@
+{
+    "key": "go-remote",
+    "rclass" : "remote",
+    "packageType": "go",
+    "url" : "https://proxy.golang.org/",
+    "repoLayoutRef" : "go-default",
+    "vcsGitProvider": "ARTIFACTORY"
+}

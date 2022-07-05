@@ -1,0 +1,30 @@
+# If you are interested in seeing some real examples:
+
+# => https://github.com/orta/ARAnalytics/blob/master/Bootstrap/Podfile
+# => https://github.com/mneorr/ObjectiveSugar/blob/master/Example/Podfile
+# or read the docs: http://docs.cocoapods.org/podfile.html
+
+platform :ios
+
+plugin 'cocoapods-art', :sources => [
+  'cocoapods-remote'
+]
+
+def all_test_pods
+  pod 'Expecta', '1.0.6'
+end
+
+target 'ExampleBootstrap' do
+  # Refer to the parent folder to grab the podspec locally
+  # this means we can edit it and changes will be made in that folder.
+  pod "ExampleLib", :path => "../"
+  platform :ios, '10.0'
+  all_test_pods
+end
+
+target 'ExampleBootstrapTests' do
+  # Expose the ExampleLib to the test target too.
+  pod "ExampleLib", :path => "../"
+  platform :ios, '10.0'
+  all_test_pods
+end

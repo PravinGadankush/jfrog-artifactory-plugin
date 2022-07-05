@@ -1,0 +1,8 @@
+{
+    "key": "bower-remote",
+    "rclass" : "remote",
+    "packageType": "bower",
+    "url" : "https://github.com/",
+    "propertySets": [ "artifactory" ],
+    "repoLayoutRef" : "bower-default"
+}

@@ -1,0 +1,6 @@
+2022-07-04T11:46:57.781Z [jfrt ] [INFO ] [ad764a1dab1457a ] [c.c.s.cxsca-security-plugin:26] [http-nio-8081-exec-3] - Started artifact verification. Artifact name: Flurl.2.8.2.nupkg
+2022-07-04T11:46:58.821Z [jfrt ] [INFO ] [ad764a1dab1457a ] [c.c.s.cxsca-security-plugin:26] [http-nio-8081-exec-3] - Ended the artifact verification. Artifact name: Flurl.2.8.2.nupkg
+2022-07-04T11:47:04.823Z [jfrt ] [INFO ] [294a93df24d84f08] [c.c.s.cxsca-security-plugin:26] [http-nio-8081-exec-4] - Started artifact verification. Artifact name: Microsoft.NETCore.App.Ref.3.1.0.nupkg
+2022-07-04T11:47:04.849Z [jfrt ] [INFO ] [e9f5d2c41dad7828] [c.c.s.cxsca-security-plugin:26] [http-nio-8081-exec-1] - Started artifact verification. Artifact name: Microsoft.AspNetCore.App.Ref.3.1.10.nupkg
+2022-07-04T11:47:05.896Z [jfrt ] [INFO ] [294a93df24d84f08] [c.c.s.cxsca-security-plugin:26] [http-nio-8081-exec-4] - Ended the artifact verification. Artifact name: Microsoft.NETCore.App.Ref.3.1.0.nupkg
+2022-07-04T11:47:05.960Z [jfrt ] [INFO ] [e9f5d2c41dad7828] [c.c.s.cxsca-security-plugin:26] [http-nio-8081-exec-1] - Ended the artifact verification. Artifact name: Microsoft.AspNetCore.App.Ref.3.1.10.nupkg

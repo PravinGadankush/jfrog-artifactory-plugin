@@ -1,0 +1,45 @@
+# To run locally: docker-compose up --build --abort-on-container-exit
+version: '3.7'
+services:
+  artifactory:
+    build:
+      context: .
+      target: jfrog
+    image: buildimage-jfrog
+    user: "0:0"
+    volumes:
+      - cxsca-log:/opt/jfrog/artifactory/var/log/
+      - ./nginx.crt:/var/opt/jfrog/artifactory/data/nginx/ssl/nginx.crt
+      - ./nginx.key:/var/opt/jfrog/artifactory/data/nginx/ssl/nginx.key
+      - ./artifactory.lic:/opt/jfrog/artifactory/var/etc/artifactory/artifactory.lic
+      - ./integration-tests/artifactory-data/nginx:/var/opt/jfrog/artifactory/data/nginx/
+  nginx:
+    image: releases-docker.jfrog.io/jfrog/nginx-artifactory-pro:7.38.10
+    user: "0:0"
+    depends_on:
+      - artifactory
+    environment:
+      - ART_BASE_URL=http://artifactory:8082
+      - SSL=true
+    volumes:
+      - ./nginx.key:/var/opt/jfrog/nginx/ssl/nginx.key
+      - ./nginx.crt:/var/opt/jfrog/nginx/ssl/nginx.crt
+      - ./integration-tests/artifactory-data/nginx:/var/opt/jfrog/nginx
+  e2e-tests:
+    build:
+      context: .
+      target: test
+    image: buildimage
+    user: "0:0"
+    depends_on:
+      - nginx
+      - artifactory
+    command: >
+      "echo Running e2e tests...;
+      chmod +x /integration-tests/runTests.sh;
+      /integration-tests/runTests.sh";
+    volumes:
+      - cxsca-log:/opt/
+      - ./nginx.crt:/usr/local/share/ca-certificates/nginx.crt
+volumes:
+  cxsca-log:

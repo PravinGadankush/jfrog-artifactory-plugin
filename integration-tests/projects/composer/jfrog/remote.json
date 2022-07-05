@@ -1,0 +1,6 @@
+{
+    "key": "composer-remote",
+    "rclass" : "remote",
+    "packageType": "composer",
+    "url" : "https://github.com/"
+}

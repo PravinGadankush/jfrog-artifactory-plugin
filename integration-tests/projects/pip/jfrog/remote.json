@@ -1,0 +1,8 @@
+{
+    "key": "pip-remote",
+    "rclass" : "remote",
+    "packageType": "pypi",
+    "url" : "https://files.pythonhosted.org",
+    "propertySets": [ "artifactory" ],
+    "repoLayoutRef" : "simple-default"
+}

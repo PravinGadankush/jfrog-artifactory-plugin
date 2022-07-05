@@ -1,0 +1,2 @@
+--index-url=http://admin:${password}@artifactory:8081/artifactory/api/pypi/pip-remote/simple
+rgpio==0.2.0

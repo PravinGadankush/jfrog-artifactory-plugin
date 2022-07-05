@@ -1,0 +1,2 @@
+2022-07-01T15:06:14.793Z [jfrt ] [INFO ] [ea00854de8e6e838] [c.c.s.cxsca-security-plugin:26] [http-nio-8081-exec-8] - Started artifact verification. Artifact name: metafizzy/ev-emitter/tags/v1.1.1/ev-emitter-v1.1.1.tar.gz 
+2022-07-01T15:06:16.147Z [jfrt ] [INFO ] [ea00854de8e6e838] [c.c.s.cxsca-security-plugin:26] [http-nio-8081-exec-8] - Ended the artifact verification. Artifact name: metafizzy/ev-emitter/tags/v1.1.1/ev-emitter-v1.1.1.tar.gz

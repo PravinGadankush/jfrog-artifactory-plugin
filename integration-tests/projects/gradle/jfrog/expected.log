@@ -1,0 +1,2 @@
+2022-07-04T10:28:44.943Z [jfrt ] [INFO ] [dcf8a9100dbf3206] [c.c.s.cxsca-security-plugin:26] [http-nio-8081-exec-2] - Started artifact verification. Artifact name: clover/clover-ant/1.3_01/clover-ant-1.3_01.pom
+2022-07-04T10:28:46.629Z [jfrt ] [INFO ] [dcf8a9100dbf3206] [c.c.s.cxsca-security-plugin:26] [http-nio-8081-exec-2] - Ended the artifact verification. Artifact name: clover/clover-ant/1.3_01/clover-ant-1.3_01.pom

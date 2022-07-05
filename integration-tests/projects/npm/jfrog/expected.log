@@ -1,0 +1,2 @@
+2022-06-29T10:14:23.032Z [jfrt ] [INFO ] [4e7449f986d61531] [c.c.s.cxsca-security-plugin:26] [http-nio-8081-exec-5] - Started artifact verification. Artifact name: workerpool/-/workerpool-6.2.1.tgz
+2022-06-29T10:14:24.888Z [jfrt ] [INFO ] [456c9d77bd18133b] [c.c.s.cxsca-security-plugin:26] [ttp-nio-8081-exec-15] - Ended the artifact verification. Artifact name: workerpool/-/workerpool-6.2.1.tgz

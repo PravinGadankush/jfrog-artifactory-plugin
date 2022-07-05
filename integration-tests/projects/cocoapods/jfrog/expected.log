@@ -1,0 +1,2 @@
+2022-06-29T11:03:27.785Z [jfrt ] [INFO ] [80e7cac6353080c3] [c.c.s.cxsca-security-plugin:26] [ttp-nio-8081-exec-14] - Started artifact verification. Artifact name: specta/expecta/tags/v1.0.6/expecta-v1.0.6.tar.gz
+2022-06-29T11:03:28.862Z [jfrt ] [INFO ] [80e7cac6353080c3] [c.c.s.cxsca-security-plugin:26] [ttp-nio-8081-exec-14] - Ended the artifact verification. Artifact name: specta/expecta/tags/v1.0.6/expecta-v1.0.6.tar.gz

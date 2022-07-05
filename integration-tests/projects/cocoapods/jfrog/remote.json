@@ -1,0 +1,8 @@
+{
+    "key": "cocoapods-remote",
+    "rclass" : "remote",
+    "packageType": "cocoapods",
+    "repoLayoutRef" : "simple-default",
+    "propertySets": [ "artifactory" ],
+    "url" : "https://github.com/"
+}

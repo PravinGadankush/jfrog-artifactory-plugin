@@ -1,0 +1,6 @@
+{
+  "name": "bower-basic-cx",
+  "dependencies": {
+    "ev-emitter": "1.1.1"
+  }
+}

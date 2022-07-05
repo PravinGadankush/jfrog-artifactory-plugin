@@ -1,0 +1,11 @@
+{
+    "key": "nuget-remote",
+    "rclass" : "remote",
+    "packageType": "nuget",
+    "url" : "https://www.nuget.org/",
+    "repoLayoutRef" : "nuget-default",
+    "propertySets": [ "artifactory" ],
+    "feedContextPath": "api/v2",
+    "downloadContextPath": "api/v2/package",
+    "v3FeedUrl":"https://api.nuget.org/v3/index.json"
+}

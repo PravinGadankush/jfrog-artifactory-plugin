@@ -1,0 +1,7 @@
+{
+    "key": "go-virtual",
+    "rclass" : "virtual",
+    "packageType": "go",
+    "repositories": [ "go-remote" ],
+    "repoLayoutRef": "go-default"
+}

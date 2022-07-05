@@ -1,0 +1,2 @@
+2022-06-22T14:14:47.314Z [jfrt ] [INFO ] [d4faa6375cc5c7ad] [c.c.s.cxsca-security-plugin:26] [http-nio-8081-exec-4] - Started artifact verification. Artifact name: golang.org/x/xerrors/@v/v0.0.0-20220609144429-65e65417b02f.zip
+2022-06-22T14:14:47.863Z [jfrt ] [INFO ] [d4faa6375cc5c7ad] [c.c.s.cxsca-security-plugin:26] [http-nio-8081-exec-4] - Ended the artifact verification. Artifact name: golang.org/x/xerrors/@v/v0.0.0-20220609144429-65e65417b02f.zip

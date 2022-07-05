@@ -26,8 +26,25 @@ pipeline{
                     currentBuild.displayName = "${env.FORMATTED_VERSION}"
                     def containerName = "jfrog-plugin-${env.FORMATTED_VERSION}"
                     pipelineUtils.buildDockerImage(null, "VERSION=${VERSION}")
-                    sh "docker create --name $containerName buildimage"
+                    sh "docker create --name $containerName buildimage-build"
                     sh "docker cp $containerName:/artifacts ${env.ARTIFACTS_DIRECTORY}"
+                }
+            }
+        }
+        stage('E2E-Test') {
+            steps {
+                withCredentials([
+                    file(credentialsId: 'JFROG_LICENSE', variable: 'jfrog_license'),
+                    file(credentialsId: 'JFROG_NGINX_CERT', variable: 'nginx_cert'),
+                    file(credentialsId: 'JFROG_NGINX_KEY', variable: 'nginx_key')
+                ])
+                {
+                    script {
+                        writeFile file: 'artifactory.lic', text: readFile(jfrog_license)
+                        writeFile file: 'nginx.key', text: readFile(nginx_key)
+                        writeFile file: 'nginx.crt', text: readFile(nginx_cert)
+                        microservicePipelineStages.invokeTestStage([])
+                    }
                 }
             }
         }

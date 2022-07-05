@@ -1,0 +1,11 @@
+{
+  "name": "npm-example-1",
+  "version": "0.0.4-4",
+  "scripts": {
+    "start": "node helloworld"
+  },
+  "dependencies": {
+    "workerpool": "6.2.1"
+  },
+  "devDependencies": {}
+}

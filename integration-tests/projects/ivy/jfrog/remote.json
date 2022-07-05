@@ -1,0 +1,8 @@
+{
+    "key": "ivy-remote",
+    "rclass" : "remote",
+    "packageType": "ivy",
+    "url" : "https://repo1.maven.org/maven2/",
+    "propertySets": [ "artifactory" ],
+    "repoLayoutRef" : "ivy-default"
+}

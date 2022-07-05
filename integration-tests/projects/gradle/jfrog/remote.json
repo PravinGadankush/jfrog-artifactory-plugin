@@ -1,0 +1,8 @@
+{
+    "key": "gradle-remote",
+    "rclass" : "remote",
+    "packageType": "gradle",
+    "url" : "https://repo1.maven.org/maven2/",
+    "repoLayoutRef" : "maven-2-default",
+    "propertySets": [ "artifactory" ]
+}

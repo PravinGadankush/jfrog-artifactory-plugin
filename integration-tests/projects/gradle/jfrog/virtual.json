@@ -1,0 +1,7 @@
+{
+    "key": "gradle-virtual",
+    "rclass" : "virtual",
+    "packageType": "gradle",
+    "repositories": [ "gradle-remote", "gradle-local" ],
+    "repoLayoutRef": "maven-2-default"
+}

@@ -1,0 +1,7 @@
+{
+    "key": "gradle-local",
+    "rclass" : "local",
+    "packageType": "gradle",
+    "repoLayoutRef" : "maven-2-default",
+    "propertySets": [ "artifactory" ]
+}

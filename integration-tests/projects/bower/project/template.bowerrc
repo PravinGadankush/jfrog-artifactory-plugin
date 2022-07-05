@@ -1,0 +1,6 @@
+{
+    "registry": "http://admin:${password}@artifactory:8081/artifactory/api/bower/bower-remote",
+    "resolvers": [
+        "bower-art-resolver"
+    ]
+}

@@ -1,0 +1,16 @@
+2022-07-01T15:37:46.688Z [jfrt ] [INFO ] [2e3c96991acc790 ] [c.c.s.cxsca-security-plugin:26] [http-nio-8081-exec-1] - Started artifact verification. Artifact name: org/hamcrest/hamcrest/2.2/hamcrest-2.2.pom
+2022-07-01T15:37:47.793Z [jfrt ] [INFO ] [2e3c96991acc790 ] [c.c.s.cxsca-security-plugin:26] [http-nio-8081-exec-1] - Ended the artifact verification. Artifact name: org/hamcrest/hamcrest/2.2/hamcrest-2.2.pom
+2022-07-01T15:37:47.818Z [jfrt ] [INFO ] [53ebcfc85a019592] [c.c.s.cxsca-security-plugin:26] [http-nio-8081-exec-6] - Scan ignored by cache configuration. Artifact name: hamcrest-2.2.pom
+2022-07-01T15:37:47.850Z [jfrt ] [INFO ] [3230975c1249d41d] [c.c.s.cxsca-security-plugin:26] [http-nio-8081-exec-3] - Scan ignored by cache configuration. Artifact name: hamcrest-2.2.pom
+2022-07-01T15:37:48.526Z [jfrt ] [INFO ] [1dbf13290e5a5994] [c.c.s.cxsca-security-plugin:26] [http-nio-8081-exec-8] - Started artifact verification. Artifact name: org/hamcrest/hamcrest/2.2/hamcrest-2.2.jar
+2022-07-01T15:37:49.619Z [jfrt ] [INFO ] [1dbf13290e5a5994] [c.c.s.cxsca-security-plugin:26] [http-nio-8081-exec-8] - Ended the artifact verification. Artifact name: org/hamcrest/hamcrest/2.2/hamcrest-2.2.jar
+2022-07-01T15:37:49.977Z [jfrt ] [INFO ] [64cec4d20d8e4946] [c.c.s.cxsca-security-plugin:26] [http-nio-8081-exec-9] - Started artifact verification. Artifact name: org/hamcrest/hamcrest/2.2/hamcrest-2.2-sources.jar
+2022-07-01T15:37:50.809Z [jfrt ] [INFO ] [64cec4d20d8e4946] [c.c.s.cxsca-security-plugin:26] [http-nio-8081-exec-9] - Ended the artifact verification. Artifact name: org/hamcrest/hamcrest/2.2/hamcrest-2.2-sources.jar
+2022-07-01T15:37:51.328Z [jfrt ] [INFO ] [14e374dc7ddd596e] [c.c.s.cxsca-security-plugin:26] [http-nio-8081-exec-2] - Started artifact verification. Artifact name: org/hamcrest/hamcrest/2.2/hamcrest-2.2-javadoc.jar
+2022-07-01T15:37:52.139Z [jfrt ] [INFO ] [14e374dc7ddd596e] [c.c.s.cxsca-security-plugin:26] [http-nio-8081-exec-2] - Ended the artifact verification. Artifact name: org/hamcrest/hamcrest/2.2/hamcrest-2.2-javadoc.jar
+2022-07-01T15:37:52.168Z [jfrt ] [INFO ] [9f450b2300edad09] [c.c.s.cxsca-security-plugin:26] [http-nio-8081-exec-4] - Scan ignored by cache configuration. Artifact name: hamcrest-2.2-javadoc.jar
+2022-07-01T15:37:52.214Z [jfrt ] [INFO ] [72dea6f0c8ec096a] [c.c.s.cxsca-security-plugin:26] [http-nio-8081-exec-6] - Scan ignored by cache configuration. Artifact name: hamcrest-2.2-javadoc.jar
+2022-07-01T15:37:52.237Z [jfrt ] [INFO ] [4a45f7d44caae0b9] [c.c.s.cxsca-security-plugin:26] [http-nio-8081-exec-5] - Scan ignored by cache configuration. Artifact name: hamcrest-2.2.jar
+2022-07-01T15:37:52.263Z [jfrt ] [INFO ] [6a80d9ce34122c65] [c.c.s.cxsca-security-plugin:26] [http-nio-8081-exec-8] - Scan ignored by cache configuration. Artifact name: hamcrest-2.2.jar
+2022-07-01T15:37:52.283Z [jfrt ] [INFO ] [8eca4bac9d943647] [c.c.s.cxsca-security-plugin:26] [http-nio-8081-exec-9] - Scan ignored by cache configuration. Artifact name: hamcrest-2.2-sources.jar
+2022-07-01T15:37:52.306Z [jfrt ] [INFO ] [fea67e97d1b7c70b] [c.c.s.cxsca-security-plugin:26] [ttp-nio-8081-exec-10] - Scan ignored by cache configuration. Artifact name: hamcrest-2.2-sources.jar

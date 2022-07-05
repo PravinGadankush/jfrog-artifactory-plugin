@@ -1,0 +1,8 @@
+{
+    "key": "sbt-remote",
+    "rclass" : "remote",
+    "packageType": "sbt",
+    "url" : "https://repo1.maven.org/maven2/",
+    "repoLayoutRef" : "sbt-default",
+    "propertySets": [ "artifactory" ]
+}

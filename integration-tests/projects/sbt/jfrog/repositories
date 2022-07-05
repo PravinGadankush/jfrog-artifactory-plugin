@@ -1,0 +1,4 @@
+[repositories]
+local
+my-ivy-proxy-releases: http://artifactory:8081/artifactory/sbt-remote/, [organization]/[module]/(scala_[scalaVersion]/)(sbt_[sbtVersion]/)[revision]/[type]s/[artifact](-[classifier]).[ext], allowInsecureProtocol
+my-maven-proxy-releases: http://artifactory:8081/artifactory/sbt-remote/, allowInsecureProtocol

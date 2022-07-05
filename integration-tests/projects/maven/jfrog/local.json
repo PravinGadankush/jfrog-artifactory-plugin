@@ -1,0 +1,7 @@
+{
+    "key": "mvn-local",
+    "rclass" : "local",
+    "packageType": "maven",
+    "repoLayoutRef" : "maven-2-default",
+    "propertySets": [ "artifactory" ]
+}

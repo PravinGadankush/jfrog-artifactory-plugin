@@ -1,0 +1,8 @@
+{
+    "key": "npm-remote",
+    "rclass" : "remote",
+    "packageType": "npm",
+    "repoLayoutRef" : "npm-default",
+    "propertySets": [ "artifactory" ],
+    "url" : "https://registry.npmjs.org"
+}
