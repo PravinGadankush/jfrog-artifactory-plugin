@@ -1,6 +1,8 @@
 package com.checkmarx.sca;
 
+import com.checkmarx.sca.communication.AccessControlClient;
 import com.checkmarx.sca.configuration.ConfigurationReader;
+import com.checkmarx.sca.configuration.PluginConfiguration;
 import com.checkmarx.sca.scan.ArtifactRisksFiller;
 import com.checkmarx.sca.scan.SecurityThresholdChecker;
 import com.google.inject.Guice;
@@ -29,16 +31,34 @@ public class ScaPlugin {
             var configuration = ConfigurationReader.loadConfiguration(pluginsDirectory, logger);
             configuration.validate();
 
+            var accessControlClient = tryToAuthenticate(configuration, logger);
+
             _repositories = repositories;
             var risksFiller = new ArtifactRisksFiller(repositories);
             var securityThresholdChecker = new SecurityThresholdChecker(repositories);
-            var appInjector = new AppInjector(_logger, risksFiller, configuration, securityThresholdChecker);
+            var appInjector = new AppInjector(_logger, accessControlClient, risksFiller, configuration, securityThresholdChecker);
 
             _injector = Guice.createInjector(appInjector);
         } catch (Exception ex) {
             _logger.error("Sca plugin could not be initialized!");
             throw ex;
         }
+    }
+
+    private AccessControlClient tryToAuthenticate(@Nonnull PluginConfiguration configuration, @Nonnull Logger logger) {
+        AccessControlClient accessControlClient = null;
+        try {
+            if (configuration.hasAuthConfiguration()) {
+                accessControlClient = new AccessControlClient(configuration, logger);
+                accessControlClient.Authenticate(configuration.getAccessControlCredentials());
+            } else {
+                _logger.info("Authentication configuration not defined.");
+            }
+        } catch (Exception ex) {
+            _logger.error("Authentication failed. Working without authentication.");
+        }
+
+        return accessControlClient;
     }
 
     public void checkArtifactsAlreadyPresent(RepoPath repoPath) {
@@ -56,7 +76,6 @@ public class ScaPlugin {
         if (riskAddedSuccessfully) {
             checkRiskThreshold(repoPath, nonVirtualRepoPaths);
         }
-
     }
 
     private ArrayList<RepoPath> getNonVirtualRepoPaths(RepoPath repoPath){

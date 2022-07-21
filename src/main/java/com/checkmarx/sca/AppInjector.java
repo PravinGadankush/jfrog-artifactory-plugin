@@ -19,20 +19,9 @@ public class AppInjector extends AbstractModule {
     private final PluginConfiguration _configuration;
 
     public AppInjector(@Nonnull Logger logger,
+                       AccessControlClient accessControlClient,
                        @Nonnull ArtifactRisksFiller artifactFiller,
                        @Nonnull PluginConfiguration configuration,
-                       @Nonnull SecurityThresholdChecker securityThresholdChecker) {
-        _logger = logger;
-        _accessControlClient = null;
-        _configuration = configuration;
-        _artifactFiller = artifactFiller;
-        _securityThresholdChecker = securityThresholdChecker;
-    }
-
-    public AppInjector(@Nonnull Logger logger,
-                       @Nonnull ArtifactRisksFiller artifactFiller,
-                       @Nonnull PluginConfiguration configuration,
-                       @Nonnull AccessControlClient accessControlClient,
                        @Nonnull SecurityThresholdChecker securityThresholdChecker) {
         _logger = logger;
         _configuration = configuration;

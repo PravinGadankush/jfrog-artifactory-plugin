@@ -1,0 +1,16 @@
+# To run locally: docker-compose up --build --abort-on-container-exit
+version: '3.7'
+services:
+  artifactory:
+    image: releases-docker.jfrog.io/jfrog/artifactory-pro:7.38.10
+    container_name: artifactory
+    user: "0:0"
+    ports:
+      - "8081:8081"
+      - "8082:8082"
+    # Define here the right files to the volumes
+    volumes:
+      - ../integration-tests/cxsca.log:/opt/jfrog/artifactory/var/log/cxsca.log
+      - ../integration-tests/artifactory-data/plugin:/opt/jfrog/artifactory/var/etc/artifactory/plugins
+      - ../integration-tests/artifactory-data/logback.xml:/opt/jfrog/artifactory/var/etc/artifactory/logback.xml
+      - ./artifactory.lic:/opt/jfrog/artifactory/var/etc/artifactory/artifactory.lic

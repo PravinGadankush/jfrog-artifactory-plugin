@@ -6,7 +6,11 @@ public enum ConfigurationEntry implements IConfigurationEntry {
     AUTHENTICATION_URL("sca.authentication.url", "https://platform.checkmarx.net/"),
     DATA_EXPIRATION_TIME("sca.data.expiration-time", "21600"),
     SECURITY_RISK_THRESHOLD("sca.security.risk.threshold", "None"),
-    PACKAGIST_REPOSITORY("packagist.repository", "https://packagist.org");
+    PACKAGIST_REPOSITORY("packagist.repository", "https://packagist.org"),
+
+    ACCOUNT("sca.account", null),
+    USERNAME("sca.username", null),
+    PASSWORD("sca.password", null);
 
     private final String propertyKey;
     private final String defaultValue;

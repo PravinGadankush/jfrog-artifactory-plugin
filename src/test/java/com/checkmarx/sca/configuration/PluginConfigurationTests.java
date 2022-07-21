@@ -10,6 +10,10 @@ import org.slf4j.Logger;
 
 import java.util.Properties;
 
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.isA;
+import static org.mockito.Mockito.times;
+
 @DisplayName("PluginConfiguration")
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public class PluginConfigurationTests {
@@ -183,5 +187,129 @@ public class PluginConfigurationTests {
         var exception = Assertions.assertThrows(IllegalArgumentException.class, configuration::validate);
 
         Assertions.assertTrue(exception.getMessage().contains(SecurityRiskThreshold.class.getName()));
+    }
+
+    @DisplayName("Validate if authentication configuration is valid - Is valid")
+    @Test
+    public void validateAuthConfigIsValid() {
+
+        var artifactFiller = Mockito.mock(ArtifactRisksFiller.class);
+        var securityThresholdChecker = Mockito.mock(SecurityThresholdChecker.class);
+
+        properties.setProperty(ConfigurationEntry.ACCOUNT.propertyKey(), "account");
+        properties.setProperty(ConfigurationEntry.USERNAME.propertyKey(), "username");
+        properties.setProperty(ConfigurationEntry.PASSWORD.propertyKey(), "password");
+
+        var configuration = new PluginConfiguration(properties, _logger);
+
+        var appInjector = new TestsInjector(_logger, configuration, artifactFiller, securityThresholdChecker);
+        var injector = Guice.createInjector(appInjector);
+
+        configuration = injector.getInstance(PluginConfiguration.class);
+
+        configuration.validate();
+
+        var account = configuration.getProperty(ConfigurationEntry.ACCOUNT);
+        var username = configuration.getProperty(ConfigurationEntry.USERNAME);
+        var password = configuration.getProperty(ConfigurationEntry.PASSWORD);
+
+        Assertions.assertEquals("account", account);
+        Assertions.assertEquals("username", username);
+        Assertions.assertEquals("password", password);
+        Assertions.assertTrue(configuration.hasAuthConfiguration());
+    }
+
+    @DisplayName("Validate if authentication configuration is not defined - Is not defined")
+    @Test
+    public void validateAuthConfigIsNotDefined() {
+
+        var artifactFiller = Mockito.mock(ArtifactRisksFiller.class);
+        var securityThresholdChecker = Mockito.mock(SecurityThresholdChecker.class);
+
+        var configuration = new PluginConfiguration(properties, _logger);
+
+        var appInjector = new TestsInjector(_logger, configuration, artifactFiller, securityThresholdChecker);
+        var injector = Guice.createInjector(appInjector);
+
+        configuration = injector.getInstance(PluginConfiguration.class);
+
+        configuration.validate();
+
+        Mockito.verify(_logger, times(0)).error(isA(String.class));
+        Mockito.verify(_logger, times(0)).info(isA(String.class));
+
+        Assertions.assertFalse(configuration.hasAuthConfiguration());
+    }
+
+    @DisplayName("Validate if authentication configuration is invalid - Is invalid")
+    @Test
+    public void validateAuthConfigIsInvalid() {
+
+        var artifactFiller = Mockito.mock(ArtifactRisksFiller.class);
+        var securityThresholdChecker = Mockito.mock(SecurityThresholdChecker.class);
+
+        properties.setProperty(ConfigurationEntry.ACCOUNT.propertyKey(), "account");
+        properties.setProperty(ConfigurationEntry.USERNAME.propertyKey(), "username");
+
+        var configuration = new PluginConfiguration(properties, _logger);
+
+        var appInjector = new TestsInjector(_logger, configuration, artifactFiller, securityThresholdChecker);
+        var injector = Guice.createInjector(appInjector);
+
+        configuration = injector.getInstance(PluginConfiguration.class);
+
+        configuration.validate();
+
+        Assertions.assertFalse(configuration.hasAuthConfiguration());
+        Mockito.verify(_logger, times(1)).error(isA(String.class));
+        Mockito.verify(_logger, times(1)).info(isA(String.class));
+    }
+
+    @DisplayName("Validate if able to get access control credentials - succeed")
+    @Test
+    public void validateGetAccessControlCredentials() {
+
+        var artifactFiller = Mockito.mock(ArtifactRisksFiller.class);
+        var securityThresholdChecker = Mockito.mock(SecurityThresholdChecker.class);
+
+        properties.setProperty(ConfigurationEntry.ACCOUNT.propertyKey(), "account");
+        properties.setProperty(ConfigurationEntry.USERNAME.propertyKey(), "username");
+        properties.setProperty(ConfigurationEntry.PASSWORD.propertyKey(), "password");
+
+        var configuration = new PluginConfiguration(properties, _logger);
+
+        var appInjector = new TestsInjector(_logger, configuration, artifactFiller, securityThresholdChecker);
+        var injector = Guice.createInjector(appInjector);
+
+        configuration = injector.getInstance(PluginConfiguration.class);
+
+        var accessControlCredentials = configuration.getAccessControlCredentials();
+
+        Assertions.assertEquals("account", accessControlCredentials.getTenant());
+        Assertions.assertEquals("username", accessControlCredentials.getUsername());
+        Assertions.assertEquals("password", accessControlCredentials.getPassword());
+    }
+
+    @DisplayName("Validate if able to get access control credentials - failed")
+    @Test
+    public void failedToGetAccessControlCredentials() {
+
+        var artifactFiller = Mockito.mock(ArtifactRisksFiller.class);
+        var securityThresholdChecker = Mockito.mock(SecurityThresholdChecker.class);
+
+        properties.setProperty(ConfigurationEntry.ACCOUNT.propertyKey(), "account");
+        properties.setProperty(ConfigurationEntry.USERNAME.propertyKey(), "username");
+
+        var configuration = new PluginConfiguration(properties, _logger);
+
+        var appInjector = new TestsInjector(_logger, configuration, artifactFiller, securityThresholdChecker);
+        var injector = Guice.createInjector(appInjector);
+
+        configuration = injector.getInstance(PluginConfiguration.class);
+
+        Assertions.assertThrows(NullPointerException.class, configuration::getAccessControlCredentials);
+
+        Mockito.verify(_logger, times(1)).error(isA(String.class));
+        Mockito.verify(_logger, times(1)).error(any(), isA(Exception.class));
     }
 }

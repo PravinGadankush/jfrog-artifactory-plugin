@@ -10,7 +10,6 @@ import com.checkmarx.sca.communication.models.AuthenticationHeader;
 import com.checkmarx.sca.configuration.ConfigurationEntry;
 import com.checkmarx.sca.configuration.PluginConfiguration;
 import com.google.gson.Gson;
-import com.google.inject.Inject;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 
@@ -32,18 +31,16 @@ public class AccessControlClient {
     private final String TokenEndpointPath = "identity/connect/token";
     private final String ClientId = "sca_resource_owner";
     private final String OAuthScope = "sca_api";
-
-    @Inject
-    private Logger _logger;
+    private final Logger _logger;
 
     private final HttpClient _httpClient;
     private final String _authenticationUrl;
     private AccessControlToken _accessControlToken;
     private AccessControlCredentials _accessControlCredentials;
 
-    @Inject
-    public AccessControlClient(@Nonnull PluginConfiguration configuration)
+    public AccessControlClient(@Nonnull PluginConfiguration configuration, @Nonnull Logger logger)
     {
+        _logger = logger;
         var authenticationUrl = configuration.getPropertyOrDefault(ConfigurationEntry.AUTHENTICATION_URL);
         if (!authenticationUrl.endsWith("/")) {
             authenticationUrl = authenticationUrl + "/";
@@ -60,10 +57,12 @@ public class AccessControlClient {
 
             AuthenticateResourceOwner();
         } catch (Exception ex) {
+            _logger.info("Authentication failed. Working without authentication.");
             _logger.error(ex.getMessage(), ex);
             return false;
         }
 
+        _logger.info("Authentication configured successfully.");
         return true;
     }
 

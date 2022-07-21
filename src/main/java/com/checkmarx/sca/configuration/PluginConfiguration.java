@@ -1,21 +1,21 @@
 package com.checkmarx.sca.configuration;
 
+import com.checkmarx.sca.communication.models.AccessControlCredentials;
 import org.slf4j.Logger;
 
 import javax.annotation.Nonnull;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Properties;
-import java.util.Set;
+import java.util.*;
 
 import static java.lang.String.format;
 
 public class PluginConfiguration {
-
     private final Logger logger;
     private final Properties properties;
 
+    private boolean hasAuthConfiguration;
+
     public PluginConfiguration(@Nonnull Properties properties, @Nonnull Logger logger) {
+        this.hasAuthConfiguration = false;
         this.properties = properties;
         this.logger = logger;
     }
@@ -32,12 +32,36 @@ public class PluginConfiguration {
         return properties.getProperty(config.propertyKey(), config.defaultValue());
     }
 
+    public boolean hasAuthConfiguration() {
+        return this.hasAuthConfiguration;
+    }
+
+    public AccessControlCredentials getAccessControlCredentials() {
+        try {
+            var account = this.getPropertyOrDefault(ConfigurationEntry.ACCOUNT);
+            var username = this.getPropertyOrDefault(ConfigurationEntry.USERNAME);
+            var password = this.getPropertyOrDefault(ConfigurationEntry.PASSWORD);
+
+            var envValue = System.getenv(password);
+            if (envValue != null) {
+                password = envValue;
+            }
+
+            return new AccessControlCredentials(username, password, account);
+        } catch (Exception ex) {
+            logger.error("Failed to get access control credentials.");
+            logger.error(ex.getMessage(), ex);
+            throw ex;
+        }
+    }
+
     public void validate() {
+        validateAuthConfig();
         validateExpirationConfig();
         validateSeverityThresholdConfig();
     }
 
-    private void validateExpirationConfig(){
+    private void validateExpirationConfig() {
         var expirationTime = getProperty(ConfigurationEntry.DATA_EXPIRATION_TIME);
 
         if (expirationTime != null) {
@@ -56,7 +80,7 @@ public class PluginConfiguration {
         }
     }
 
-    private void validateSeverityThresholdConfig(){
+    private void validateSeverityThresholdConfig() {
         var threshold = getProperty(ConfigurationEntry.SECURITY_RISK_THRESHOLD);
 
         if (threshold != null) {
@@ -67,5 +91,39 @@ public class PluginConfiguration {
                 throw ex;
             }
         }
+    }
+
+    private void validateAuthConfig() {
+        var account = this.getPropertyOrDefault(ConfigurationEntry.ACCOUNT);
+        var username = this.getPropertyOrDefault(ConfigurationEntry.USERNAME);
+        var password = this.getPropertyOrDefault(ConfigurationEntry.PASSWORD);
+
+        if (Objects.equals(account, null)
+                && Objects.equals(username, null)
+                && Objects.equals(password, null)) {
+            return;
+        }
+
+        var missingFields = new ArrayList<String>();
+        if (Objects.equals(account, null)) {
+            missingFields.add(ConfigurationEntry.ACCOUNT.propertyKey());
+        }
+
+        if (Objects.equals(username, null)) {
+            missingFields.add(ConfigurationEntry.USERNAME.propertyKey());
+        }
+
+        if (Objects.equals(password, null)) {
+            missingFields.add(ConfigurationEntry.PASSWORD.propertyKey());
+        }
+
+        if (missingFields.isEmpty()) {
+            this.hasAuthConfiguration = true;
+            return;
+        }
+
+        var message = format("A mandatory authentication configuration is missing. (Missing configurations: %s)", String.join(", ", missingFields));
+        this.logger.error(message);
+        this.logger.info("Working without authentication.");
     }
 }

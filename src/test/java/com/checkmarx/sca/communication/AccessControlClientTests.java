@@ -235,9 +235,9 @@ public class AccessControlClientTests {
         properties.setProperty("sca.authentication.url", "http://localhost:8080/");
 
         var configuration = new PluginConfiguration(properties, logger);
-        var accessControlClient = new AccessControlClient(configuration);
+        var accessControlClient = new AccessControlClient(configuration, logger);
 
-        var appInjector = new AppInjector(logger, artifactRisksFiller, configuration, accessControlClient, securityThresholdChecker);
+        var appInjector = new AppInjector(logger, accessControlClient, artifactRisksFiller, configuration, securityThresholdChecker);
 
         return Guice.createInjector(appInjector);
     }
