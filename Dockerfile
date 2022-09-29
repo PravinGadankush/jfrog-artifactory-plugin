@@ -36,17 +36,11 @@ COPY --from=build /build/lib/sca-artifactory-plugin.jar .
 
 WORKDIR /opt/jfrog/artifactory
 
-FROM 882696877841.dkr.ecr.us-east-1.amazonaws.com/source-resolver:2022.06.22.1507-e1c14de AS test
+FROM 882696877841.dkr.ecr.us-east-1.amazonaws.com/source-resolver:2022.09.28.1815-7858fcf AS test
 
 RUN apt update && apt install -y docker.io iputils-ping
 
-# GO MODULES
-# -------------
-WORKDIR /usr/local
-RUN curl -sSL -O https://golang.org/dl/go1.16.6.linux-amd64.tar.gz \
-  && tar -xvzf go1.16.6.linux-amd64.tar.gz \
-  && rm -f go1.16.6.linux-amd64.tar.gz
-ENV PATH=$PATH:/usr/local/go/bin
+RUN rm /usr/share/maven/conf/settings.xml
 
 RUN gem install cocoapods-art
 
