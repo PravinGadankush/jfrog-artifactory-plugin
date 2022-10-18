@@ -1,3 +1,12 @@
+# Tokens
+**/artifactory.lic
+**/nginx.key
+**/nginx.crt
+**/cxsca.log
+
+# Logs folder
+cxsca-log
+
 # Visual Studio
 .vscode
 .vs/

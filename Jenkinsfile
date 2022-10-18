@@ -34,12 +34,14 @@ pipeline{
         stage('E2E-Test') {
             steps {
                 withCredentials([
+                	file(credentialsId: 'JFROG_E2E_PROPERTIES_FILE', variable: 'properties_file'),
                     file(credentialsId: 'JFROG_LICENSE', variable: 'jfrog_license'),
                     file(credentialsId: 'JFROG_NGINX_CERT', variable: 'nginx_cert'),
                     file(credentialsId: 'JFROG_NGINX_KEY', variable: 'nginx_key')
                 ])
                 {
                     script {
+                        writeFile file: 'cxsca-security-plugin.properties', text: readFile(properties_file)
                         writeFile file: 'artifactory.lic', text: readFile(jfrog_license)
                         writeFile file: 'nginx.key', text: readFile(nginx_key)
                         writeFile file: 'nginx.crt', text: readFile(nginx_cert)

@@ -9,6 +9,7 @@ import com.checkmarx.sca.communication.models.AccessControlCredentials;
 import com.checkmarx.sca.configuration.PluginConfiguration;
 import com.checkmarx.sca.scan.ArtifactRisksFiller;
 import com.checkmarx.sca.scan.SecurityThresholdChecker;
+import com.checkmarx.sca.suggestion.PrivatePackageSuggestionHandler;
 import com.github.tomakehurst.wiremock.WireMockServer;
 import com.github.tomakehurst.wiremock.client.WireMock;
 import com.google.inject.Guice;
@@ -236,8 +237,9 @@ public class AccessControlClientTests {
 
         var configuration = new PluginConfiguration(properties, logger);
         var accessControlClient = new AccessControlClient(configuration, logger);
+        var suggestionHandler = Mockito.mock(PrivatePackageSuggestionHandler.class);
 
-        var appInjector = new AppInjector(logger, accessControlClient, artifactRisksFiller, configuration, securityThresholdChecker);
+        var appInjector = new AppInjector(logger, accessControlClient, artifactRisksFiller, configuration, securityThresholdChecker, suggestionHandler);
 
         return Guice.createInjector(appInjector);
     }

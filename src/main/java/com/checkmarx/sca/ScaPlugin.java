@@ -3,8 +3,10 @@ package com.checkmarx.sca;
 import com.checkmarx.sca.communication.AccessControlClient;
 import com.checkmarx.sca.configuration.ConfigurationReader;
 import com.checkmarx.sca.configuration.PluginConfiguration;
+import com.checkmarx.sca.scan.ArtifactIdBuilder;
 import com.checkmarx.sca.scan.ArtifactRisksFiller;
 import com.checkmarx.sca.scan.SecurityThresholdChecker;
+import com.checkmarx.sca.suggestion.PrivatePackageSuggestionHandler;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import org.artifactory.exception.CancelException;
@@ -36,7 +38,8 @@ public class ScaPlugin {
             _repositories = repositories;
             var risksFiller = new ArtifactRisksFiller(repositories);
             var securityThresholdChecker = new SecurityThresholdChecker(repositories);
-            var appInjector = new AppInjector(_logger, accessControlClient, risksFiller, configuration, securityThresholdChecker);
+            var privatePackageSuggestionHandler = new PrivatePackageSuggestionHandler(repositories, configuration.hasAuthConfiguration());
+            var appInjector = new AppInjector(_logger, accessControlClient, risksFiller, configuration, securityThresholdChecker, privatePackageSuggestionHandler);
 
             _injector = Guice.createInjector(appInjector);
         } catch (Exception ex) {
@@ -67,8 +70,18 @@ public class ScaPlugin {
         addPackageRisks(repoPath, nonVirtualRepoPaths);
     }
 
-    public void beforeDownload(RepoPath repoPath) {
 
+    public void checkArtifactsForSuggestionOnPrivatePackages(RepoPath repoPath) {
+        var nonVirtualRepoPaths = getNonVirtualRepoPaths(repoPath);
+
+        var suggestion = _injector.getInstance(PrivatePackageSuggestionHandler.class);
+
+        for (var artifact : nonVirtualRepoPaths) {
+            suggestion.suggestPrivatePackage(artifact, nonVirtualRepoPaths);
+        }
+    }
+
+    public void beforeDownload(RepoPath repoPath) {
         var nonVirtualRepoPaths = getNonVirtualRepoPaths(repoPath);
 
         var riskAddedSuccessfully = addPackageRisks(repoPath, nonVirtualRepoPaths);
@@ -78,7 +91,15 @@ public class ScaPlugin {
         }
     }
 
-    private ArrayList<RepoPath> getNonVirtualRepoPaths(RepoPath repoPath){
+    public void beforeUpload(RepoPath repoPath) {
+        var nonVirtualRepoPaths = getNonVirtualRepoPaths(repoPath);
+
+        var suggestionHandler = _injector.getInstance(PrivatePackageSuggestionHandler.class);
+
+        suggestionHandler.suggestPrivatePackage(repoPath, nonVirtualRepoPaths);
+    }
+
+    private ArrayList<RepoPath> getNonVirtualRepoPaths(RepoPath repoPath) {
         var repositoryKey = repoPath.getRepoKey();
         var repoConfiguration = _repositories.getRepositoryConfiguration(repositoryKey);
 

@@ -1,0 +1,7 @@
+{
+    "key": "npm-local",
+    "rclass" : "local",
+    "packageType": "npm",
+    "repoLayoutRef" : "npm-default",
+    "propertySets": [ "artifactory" ]
+}

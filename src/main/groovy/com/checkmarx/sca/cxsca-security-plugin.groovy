@@ -16,6 +16,7 @@ private void scanExistingArtifacts() {
 
     searches.artifactsByName('*').each { artifact ->
         scaPlugin.checkArtifactsAlreadyPresent(artifact)
+        scaPlugin.checkArtifactsForSuggestionOnPrivatePackages(artifact)
     }
 
     log.info("Initialization of Sca Security Plugin completed")
@@ -24,5 +25,11 @@ private void scanExistingArtifacts() {
 download {
     beforeDownload { Request request, RepoPath repoPath ->
         scaPlugin.beforeDownload(repoPath)
+    }
+}
+
+upload {
+    beforeUploadRequest { Request request, RepoPath repoPath ->
+        scaPlugin.beforeUpload(repoPath)
     }
 }

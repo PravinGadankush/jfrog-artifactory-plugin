@@ -3,7 +3,8 @@ package com.checkmarx.sca.communication;
 import com.checkmarx.sca.PackageManager;
 import com.checkmarx.sca.communication.exceptions.UnexpectedResponseBodyException;
 import com.checkmarx.sca.communication.exceptions.UnexpectedResponseCodeException;
-import com.checkmarx.sca.scan.fallbacks.ComposerFallback;
+import com.checkmarx.sca.communication.exceptions.UserIsNotAuthenticatedException;
+import com.checkmarx.sca.models.ArtifactId;
 import com.checkmarx.sca.communication.fallbacks.PyPiFallback;
 import com.checkmarx.sca.configuration.ConfigurationEntry;
 import com.checkmarx.sca.configuration.PluginConfiguration;
@@ -12,6 +13,7 @@ import com.checkmarx.sca.models.PackageRiskAggregation;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import com.google.inject.Inject;
+import org.artifactory.exception.CancelException;
 import org.jetbrains.annotations.NotNull;
 
 import javax.annotation.Nonnull;
@@ -22,6 +24,7 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
+import java.util.MissingResourceException;
 import java.util.concurrent.ExecutionException;
 
 import static java.lang.String.format;
@@ -34,11 +37,14 @@ public class ScaHttpClient {
     @Inject
     private PyPiFallback _pyPiFallback;
 
+    @Inject(optional = true)
+    private AccessControlClient _accessControlClient;
+
     @Inject
     public ScaHttpClient(@Nonnull PluginConfiguration configuration) {
         var apiUrl = configuration.getPropertyOrDefault(ConfigurationEntry.API_URL);
         if (!apiUrl.endsWith("/")) {
-            apiUrl = apiUrl + "/";
+            apiUrl += '/';
         }
 
         _apiUrl = apiUrl;
@@ -103,7 +109,22 @@ public class ScaHttpClient {
         return packageRiskAggregation;
     }
 
-    private HttpRequest getRiskAggregationArtifactRequest(String packageType, String name, String version) {
+    public Boolean suggestPrivatePackage(ArtifactId artifactId) throws ExecutionException, InterruptedException, MissingResourceException {
+
+        var request = getSuggestPrivatePackageRequest(artifactId);
+
+        var responseFuture = _httpClient.sendAsync(request, HttpResponse.BodyHandlers.ofString());
+
+        var response = responseFuture.get();
+
+        if (response.statusCode() != 200) {
+            throw new UnexpectedResponseBodyException(response.body());
+        }
+
+        return true;
+    }
+
+    private HttpRequest getRiskAggregationArtifactRequest(String packageType, String name, String version) throws CancelException {
 
         String body = format("{\"packageName\":\"%s\",\"version\":\"%s\",\"packageManager\":\"%s\"}", name, version, packageType);
 
@@ -127,6 +148,24 @@ public class ScaHttpClient {
                 .build();
     }
 
+    private HttpRequest getSuggestPrivatePackageRequest(ArtifactId artifactId) throws CancelException {
+
+        var body = format("[{\"name\":\"%s\",\"packageManager\":\"%s\",\"version\":\"%s\",\"origin\":\"PrivateArtifactory\"}]",
+                artifactId.Name, artifactId.PackageType, artifactId.Version);
+
+        if (_accessControlClient == null) {
+            throw new UserIsNotAuthenticatedException();
+        }
+
+        var authHeader = _accessControlClient.GetAuthorizationHeader();
+        return HttpRequest.newBuilder(URI.create(format("%s%s", _apiUrl, "private-dependencies-repository/dependencies")))
+                .header(authHeader.getKey(), authHeader.getValue())
+                .header("content-type", "application/json")
+                .header("User-Agent", UserAgent)
+                .POST(HttpRequest.BodyPublishers.ofString(body))
+                .build();
+    }
+
     private HttpResponse<String> TryToFallback(HttpResponse<String> previousResponse, String packageType, String name, String version) throws ExecutionException, InterruptedException {
 
         String newName = null;
@@ -146,6 +185,4 @@ public class ScaHttpClient {
 
         return artifactResponse;
     }
-
-
 }

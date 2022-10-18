@@ -29,7 +29,6 @@ COPY /integration-tests/artifactory-data/artifactory.config.xml .
 
 WORKDIR /opt/jfrog/artifactory/var/etc/artifactory/plugins
 COPY --from=build /build/cxsca-security-plugin.groovy .
-COPY --from=build /build/cxsca-security-plugin.properties .
 
 WORKDIR /opt/jfrog/artifactory/var/etc/artifactory/plugins/lib
 COPY --from=build /build/lib/sca-artifactory-plugin.jar .

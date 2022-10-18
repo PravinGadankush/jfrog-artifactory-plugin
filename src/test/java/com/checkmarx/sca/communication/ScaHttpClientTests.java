@@ -5,6 +5,7 @@ import com.checkmarx.sca.communication.exceptions.UnexpectedResponseBodyExceptio
 import com.checkmarx.sca.communication.exceptions.UnexpectedResponseCodeException;
 import com.checkmarx.sca.communication.models.AuthenticationHeader;
 import com.checkmarx.sca.configuration.PluginConfiguration;
+import com.checkmarx.sca.models.ArtifactId;
 import com.checkmarx.sca.scan.ArtifactRisksFiller;
 import com.checkmarx.sca.scan.SecurityThresholdChecker;
 import com.github.tomakehurst.wiremock.WireMockServer;
@@ -19,6 +20,7 @@ import java.util.Properties;
 import java.util.concurrent.ExecutionException;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
+import static com.github.tomakehurst.wiremock.client.WireMock.containing;
 
 @DisplayName("ScaHttpClient")
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
@@ -199,6 +201,42 @@ public class ScaHttpClientTests {
         var scaHttpClient = injector.getInstance(ScaHttpClient.class);
 
         Assertions.assertThrows(UnexpectedResponseBodyException.class, () -> scaHttpClient.getRiskAggregationOfArtifact("Npm", "lodash", "0.2.1"));
+    }
+
+    @DisplayName("Suggest private package with success")
+    @Test
+    public void suggestPrivatePackageWithSuccess() throws ExecutionException, InterruptedException {
+
+        this.wireMockServer.stubFor(
+                WireMock.post("/private-dependencies-repository/dependencies")
+                            .withRequestBody(containing("[{\"name\":\"lodash\",\"packageManager\":\"Npm\",\"version\":\"0.2.1\",\"origin\":\"PrivateArtifactory\"}]"))
+                            .willReturn(ok())
+        );
+
+        var injector = CreateAppInjectorForTests();
+
+        var scaHttpClient = injector.getInstance(ScaHttpClient.class);
+
+        var result = scaHttpClient.suggestPrivatePackage(new ArtifactId("Npm", "lodash", "0.2.1"));
+
+        Assertions.assertTrue(result);
+    }
+
+    @DisplayName("Failed to suggest private package - Unexpected Response")
+    @Test
+    public void failedToSuggestPrivatePackage() {
+
+        this.wireMockServer.stubFor(
+                WireMock.post("/private-dependencies-repository/dependencies")
+                        .withRequestBody(containing("[{\"name\":\"lodash\",\"packageManager\":\"Npm\",\"version\":\"0.2.1\",\"origin\":\"PrivateArtifactory\"}]"))
+                        .willReturn(aResponse().withStatus(500))
+        );
+
+        var injector = CreateAppInjectorForTests();
+
+        var scaHttpClient = injector.getInstance(ScaHttpClient.class);
+
+        Assertions.assertThrows(UnexpectedResponseBodyException.class, () -> scaHttpClient.suggestPrivatePackage(new ArtifactId("Npm", "lodash", "0.2.1")));
     }
 
     private Injector CreateAppInjectorForTests(){

@@ -10,6 +10,7 @@ import com.checkmarx.sca.communication.models.AuthenticationHeader;
 import com.checkmarx.sca.configuration.ConfigurationEntry;
 import com.checkmarx.sca.configuration.PluginConfiguration;
 import com.google.gson.Gson;
+import com.google.gson.JsonObject;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 
@@ -20,6 +21,7 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
+import java.util.Base64;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
@@ -43,7 +45,7 @@ public class AccessControlClient {
         _logger = logger;
         var authenticationUrl = configuration.getPropertyOrDefault(ConfigurationEntry.AUTHENTICATION_URL);
         if (!authenticationUrl.endsWith("/")) {
-            authenticationUrl = authenticationUrl + "/";
+            authenticationUrl += "/";
         }
 
         _authenticationUrl = authenticationUrl;
@@ -98,6 +100,23 @@ public class AccessControlClient {
         }
 
         return _accessControlToken.getAccessToken();
+    }
+
+    public String getTenantId(){
+        return getDataStringFromToken("tenant_id");
+    }
+
+    private String getDataStringFromToken (String field){
+        JsonObject contentObject = getJsonObjectFromToken();
+        return contentObject.get(field).getAsString();
+    }
+
+    private JsonObject getJsonObjectFromToken() {
+        var token = GetAuthorizationToken();
+        var chunks = token.split("\\.");
+        var tokenContent = chunks[1];
+        var contentDecoded = Base64.getUrlDecoder().decode(tokenContent);
+        return new Gson().fromJson(String.valueOf(contentDecoded), JsonObject.class);
     }
 
     private void AuthenticateResourceOwner() throws ExecutionException, InterruptedException {

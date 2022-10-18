@@ -16,6 +16,18 @@ create_repository () {
         -d @$2
 }
 
+upload_package() {
+  REPOSITORY=$1
+  ARTIFACT_NAME=$2
+  ARTIFACT=$3
+
+    curl -u "admin:password" \
+        -X PUT "https://nginx/artifactory/$REPOSITORY/$ARTIFACT_NAME" \
+        -T "$ARTIFACT"
+}
+
+
+
 clean_logs () {
     > /opt/cxsca.log
 }
@@ -50,6 +62,7 @@ create_repository "pip-remote" "./pip/jfrog/remote.json";
 create_repository "ivy-remote" "./ivy/jfrog/remote.json";
 
 create_repository "npm-remote" "./npm/jfrog/remote.json";
+create_repository "npm-local" "./npm-suggestion-private/jfrog/local.json";
 
 create_repository "mvn-local" "./maven/jfrog/local.json";
 create_repository "mvn-remote" "./maven/jfrog/remote.json";
@@ -83,6 +96,15 @@ sed -e "s/\${password}/$encryptedPasswordBase64/" template.npmrc > .npmrc
 npm i
 
 validate_result "npm";
+
+# NPM private package Test
+cd /projects/npm/project;
+
+clean_logs;
+
+upload_package "npm-local" "test/-/npmtestpackage-it-1.0.0.tgz" "/projects/npm-suggestion-private/project/npmtestpackage-it-1.0.0.tgz"
+
+validate_result "npm-suggestion-private";
 
 # Go Test
 cd /projects/go/project;

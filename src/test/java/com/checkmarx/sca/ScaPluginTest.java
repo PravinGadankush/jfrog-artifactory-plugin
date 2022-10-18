@@ -1,5 +1,7 @@
 package com.checkmarx.sca;
 
+import com.github.tomakehurst.wiremock.WireMockServer;
+import com.github.tomakehurst.wiremock.client.WireMock;
 import org.artifactory.exception.CancelException;
 import org.artifactory.fs.FileLayoutInfo;
 import org.artifactory.repo.*;
@@ -17,6 +19,8 @@ import java.util.List;
 
 import static com.checkmarx.sca.PropertiesConstants.HIGH_RISKS_COUNT;
 import static com.checkmarx.sca.PropertiesConstants.IGNORE_THRESHOLD;
+import static com.checkmarx.sca.suggestion.PrivatePackageSuggestionHandler.SUGGESTED_KEY;
+import static com.github.tomakehurst.wiremock.client.WireMock.*;
 import static java.lang.String.format;
 import static org.mockito.ArgumentMatchers.isA;
 import static org.mockito.Mockito.never;
@@ -218,6 +222,76 @@ public class ScaPluginTest {
 
         Mockito.verify(logger, never()).warn(isA(String.class));
         Mockito.verify(logger, never()).warn(isA(String.class), isA(Exception.class));
+    }
+
+
+    @DisplayName("Check if upload artifact makes suggestion")
+    @Test
+    public void uploadArtifactMakeSuggestion() {
+
+        var wireMockServer = new WireMockServer();
+        wireMockServer.start();
+        wireMockServer.stubFor(
+                WireMock.post("/private-dependencies-repository/dependencies")
+                        .withRequestBody(containing("[{\"name\":\"lodash\",\"packageManager\":\"npm\",\"version\":\"0.2.1\",\"origin\":\"PrivateArtifactory\"}]"))
+                        .willReturn(ok())
+        );
+
+        String token = "eyJhbGciOiJSUzI1NiIsC6";
+        wireMockServer.stubFor(
+                WireMock.post("/identity/connect/token")
+                        .willReturn(ok()
+                                .withHeader("Content-Type", "application/json; charset=UTF-8")
+                                .withBody(format("{\"access_token\":\"%s\",\"expires_in\":3600,\"token_type\":\"Bearer\"}", token)))
+        );
+
+        try {
+            String path = "src/test/resources/com/checkmarx/sca/configuration-local";
+            File resourcesDir = new File(path);
+
+            var fileLayoutInfo = Mockito.mock(FileLayoutInfo.class);
+            when(fileLayoutInfo.getBaseRevision()).thenReturn(ArtifactVersion);
+            when(fileLayoutInfo.getModule()).thenReturn(ArtifactName);
+            when(fileLayoutInfo.isValid()).thenReturn(true);
+
+            var repoPath = Mockito.mock(RepoPath.class);
+            when(repoPath.getRepoKey()).thenReturn(RepoKey);
+            when(repoPath.getName()).thenReturn(format("%s-%s", ArtifactName, ArtifactVersion));
+            when(repoPath.getPath()).thenReturn(format("%s/-/%s-%s.tgz", ArtifactName, ArtifactName, ArtifactVersion));
+
+            var localRepositoryConfiguration = Mockito.mock(LocalRepositoryConfiguration.class);
+            when(localRepositoryConfiguration.getPackageType()).thenReturn(ArtifactType);
+
+            var repositories = Mockito.mock(Repositories.class);
+            when(repositories.exists(repoPath)).thenReturn(false);
+            when(repositories.getLayoutInfo(repoPath)).thenReturn(fileLayoutInfo);
+            when(repositories.getRepositoryConfiguration(RepoKey)).thenReturn(localRepositoryConfiguration);
+
+            var properties = Mockito.mock(org.artifactory.md.Properties.class);
+            when(properties.containsKey(SUGGESTED_KEY)).thenReturn(true);
+
+            when(repositories.setProperty(isA(RepoPath.class), isA(String.class), isA(String.class))).thenReturn(properties);
+
+            var logger = Mockito.mock(Logger.class);
+
+            try {
+                var scaPlugin = new ScaPlugin(logger, resourcesDir, repositories);
+                scaPlugin.beforeUpload(repoPath);
+            } catch (IOException e) {
+                Assertions.fail();
+            }
+
+            Mockito.verify(logger, never()).error(isA(String.class));
+            Mockito.verify(logger, never()).error(isA(String.class), isA(Exception.class));
+
+            Mockito.verify(logger, never()).warn(isA(String.class));
+            Mockito.verify(logger, never()).warn(isA(String.class), isA(Exception.class));
+
+            wireMockServer.verify(exactly(1), postRequestedFor(urlEqualTo("/identity/connect/token")));
+            wireMockServer.verify(exactly(1), postRequestedFor(urlEqualTo("/private-dependencies-repository/dependencies")));
+        } finally {
+            wireMockServer.stop();
+        }
     }
 
     private void MockGetProperties(Repositories repositories, RepoPath repoPath, String value) {

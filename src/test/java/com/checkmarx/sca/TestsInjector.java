@@ -6,6 +6,7 @@ import com.checkmarx.sca.configuration.PluginConfiguration;
 import com.checkmarx.sca.scan.ArtifactRisksFiller;
 import com.checkmarx.sca.scan.SecurityThresholdChecker;
 import com.google.inject.AbstractModule;
+import org.mockito.Mockito;
 import org.slf4j.Logger;
 
 import javax.annotation.Nonnull;
@@ -44,11 +45,11 @@ public class TestsInjector extends AbstractModule {
         bind(ArtifactRisksFiller.class).toInstance(_artifactRisksFiller);
         bind(SecurityThresholdChecker.class).toInstance(_securityThresholdChecker);
 
-        if(_accessControlClient != null){
+        if (_accessControlClient != null){
             bind(AccessControlClient.class).toInstance(_accessControlClient);
         }
 
-        if(_scaHttpClient != null){
+        if (_scaHttpClient != null){
             bind(ScaHttpClient.class).toInstance(_scaHttpClient);
         }
     }
