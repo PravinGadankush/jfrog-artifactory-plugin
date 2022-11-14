@@ -35,7 +35,7 @@ COPY --from=build /build/lib/sca-artifactory-plugin.jar .
 
 WORKDIR /opt/jfrog/artifactory
 
-FROM 882696877841.dkr.ecr.us-east-1.amazonaws.com/source-resolver:2022.09.28.1815-7858fcf AS test
+FROM 882696877841.dkr.ecr.us-east-1.amazonaws.com/source-resolver:2022.11.13.2005-c27feee AS test
 
 RUN apt update && apt install -y docker.io iputils-ping
 
