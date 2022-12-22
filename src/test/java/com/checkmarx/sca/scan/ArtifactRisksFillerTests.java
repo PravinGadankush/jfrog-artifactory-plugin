@@ -6,7 +6,7 @@ import com.checkmarx.sca.communication.ScaHttpClient;
 import com.checkmarx.sca.communication.exceptions.UnexpectedResponseCodeException;
 import com.checkmarx.sca.configuration.PluginConfiguration;
 import com.checkmarx.sca.models.ArtifactInfo;
-import com.checkmarx.sca.models.PackageRiskAggregation;
+import com.checkmarx.sca.models.PackageAnalysisAggregation;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import com.google.inject.Guice;
@@ -91,7 +91,7 @@ public class ArtifactRisksFillerTests {
         ArtifactRisksFiller.addArtifactRisks(_mainRepoPath, new ArrayList<>(List.of(_mainRepoPath)));
 
         withoutWarningsAndErrors();
-        Mockito.verify(_repositories, times(7)).setProperty(isA(RepoPath.class), isA(String.class), isA(String.class));
+        Mockito.verify(_repositories, times(8)).setProperty(isA(RepoPath.class), isA(String.class), isA(String.class));
     }
 
     @DisplayName("Check artifact with success - two repositories repository")
@@ -118,7 +118,7 @@ public class ArtifactRisksFillerTests {
 
         Assertions.assertTrue(result);
         withoutWarningsAndErrors();
-        Mockito.verify(_repositories, times(14)).setProperty(isA(RepoPath.class), isA(String.class), isA(String.class));
+        Mockito.verify(_repositories, times(16)).setProperty(isA(RepoPath.class), isA(String.class), isA(String.class));
         Mockito.verify(_scaHttpClient, times(1)).getArtifactInformation(isA(String.class), isA(String.class), isA(String.class));
         Mockito.verify(_scaHttpClient, times(1)).getRiskAggregationOfArtifact(isA(String.class), isA(String.class), isA(String.class));
     }
@@ -151,7 +151,7 @@ public class ArtifactRisksFillerTests {
 
         Assertions.assertTrue(result);
         withoutWarningsAndErrors();
-        Mockito.verify(_repositories, times(14)).setProperty(isA(RepoPath.class), isA(String.class), isA(String.class));
+        Mockito.verify(_repositories, times(16)).setProperty(isA(RepoPath.class), isA(String.class), isA(String.class));
         Mockito.verify(_scaHttpClient, times(1)).getArtifactInformation(isA(String.class), isA(String.class), isA(String.class));
         Mockito.verify(_scaHttpClient, times(1)).getRiskAggregationOfArtifact(isA(String.class), isA(String.class), isA(String.class));
     }
@@ -223,7 +223,7 @@ public class ArtifactRisksFillerTests {
 
         Assertions.assertTrue(result);
         withoutWarningsAndErrors();
-        Mockito.verify(_repositories, times(7)).setProperty(isA(RepoPath.class), isA(String.class), isA(String.class));
+        Mockito.verify(_repositories, times(8)).setProperty(isA(RepoPath.class), isA(String.class), isA(String.class));
     }
 
 
@@ -356,8 +356,8 @@ public class ArtifactRisksFillerTests {
         return new Gson().fromJson("{\"id\":{\"identifier\":\"Npm-lodash-0.2.1\"},\"name\":\"lodash\",\"version\":\"0.2.1\",\"type\":\"Npm\",\"releaseDate\":\"2012-05-24T21:53:08\",\"description\":\"A drop-in replacement for Underscore.js that delivers performance improvements, bug fixes, and additional features.\",\"repositoryUrl\":\"git://github.com/bestiejs/lodash.git\",\"binaryUrl\":\"https://registry.npmjs.org/lodash/-/lodash-0.2.1.tgz\",\"projectUrl\":\"\",\"bugsUrl\":null,\"sourceUrl\":\"\",\"projectHomePage\":\"http://lodash.com\",\"homePage\":\"\",\"license\":\"\",\"summary\":\"\",\"url\":\"\",\"owner\":\"\"}", ArtifactInfo.class);
     }
 
-    private PackageRiskAggregation CreatePackageRiskAggregation(){
-        Type listType = new TypeToken<PackageRiskAggregation>(){}.getType();
+    private PackageAnalysisAggregation CreatePackageRiskAggregation(){
+        Type listType = new TypeToken<PackageAnalysisAggregation>(){}.getType();
 
         return new Gson().fromJson("{\"packageVulnerabilitiesAggregation\":{\"vulnerabilitiesCount\":159,\"maxRiskSeverity\":\"High\",\"maxRiskScore\":9.8,\"highRiskCount\":151,\"mediumRiskCount\":8,\"lowRiskCount\":0}}", listType);
     }

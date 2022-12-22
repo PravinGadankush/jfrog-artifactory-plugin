@@ -8,6 +8,7 @@ import com.checkmarx.sca.communication.exceptions.UserIsNotAuthenticatedExceptio
 import com.checkmarx.sca.communication.models.AccessControlCredentials;
 import com.checkmarx.sca.configuration.PluginConfiguration;
 import com.checkmarx.sca.scan.ArtifactRisksFiller;
+import com.checkmarx.sca.scan.LicenseAllowanceChecker;
 import com.checkmarx.sca.scan.SecurityThresholdChecker;
 import com.checkmarx.sca.suggestion.PrivatePackageSuggestionHandler;
 import com.github.tomakehurst.wiremock.WireMockServer;
@@ -229,6 +230,8 @@ public class AccessControlClientTests {
     private Injector CreateAppInjectorForTests(){
         logger = Mockito.mock(Logger.class);
         var artifactRisksFiller = Mockito.mock(ArtifactRisksFiller.class);
+
+        var licenseAllowanceChecker = Mockito.mock(LicenseAllowanceChecker.class);
         var securityThresholdChecker = Mockito.mock(SecurityThresholdChecker.class);
 
         var properties = new Properties();
@@ -239,7 +242,7 @@ public class AccessControlClientTests {
         var accessControlClient = new AccessControlClient(configuration, logger);
         var suggestionHandler = Mockito.mock(PrivatePackageSuggestionHandler.class);
 
-        var appInjector = new AppInjector(logger, accessControlClient, artifactRisksFiller, configuration, securityThresholdChecker, suggestionHandler);
+        var appInjector = new AppInjector(logger, accessControlClient, artifactRisksFiller, configuration, securityThresholdChecker, licenseAllowanceChecker, suggestionHandler);
 
         return Guice.createInjector(appInjector);
     }

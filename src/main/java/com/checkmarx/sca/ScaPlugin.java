@@ -3,8 +3,8 @@ package com.checkmarx.sca;
 import com.checkmarx.sca.communication.AccessControlClient;
 import com.checkmarx.sca.configuration.ConfigurationReader;
 import com.checkmarx.sca.configuration.PluginConfiguration;
-import com.checkmarx.sca.scan.ArtifactIdBuilder;
 import com.checkmarx.sca.scan.ArtifactRisksFiller;
+import com.checkmarx.sca.scan.LicenseAllowanceChecker;
 import com.checkmarx.sca.scan.SecurityThresholdChecker;
 import com.checkmarx.sca.suggestion.PrivatePackageSuggestionHandler;
 import com.google.inject.Guice;
@@ -38,8 +38,9 @@ public class ScaPlugin {
             _repositories = repositories;
             var risksFiller = new ArtifactRisksFiller(repositories);
             var securityThresholdChecker = new SecurityThresholdChecker(repositories);
+            var licenseAllowanceChecker = new LicenseAllowanceChecker(repositories);
             var privatePackageSuggestionHandler = new PrivatePackageSuggestionHandler(repositories, configuration.hasAuthConfiguration());
-            var appInjector = new AppInjector(_logger, accessControlClient, risksFiller, configuration, securityThresholdChecker, privatePackageSuggestionHandler);
+            var appInjector = new AppInjector(_logger, accessControlClient, risksFiller, configuration, securityThresholdChecker, licenseAllowanceChecker, privatePackageSuggestionHandler);
 
             _injector = Guice.createInjector(appInjector);
         } catch (Exception ex) {
@@ -88,6 +89,7 @@ public class ScaPlugin {
 
         if (riskAddedSuccessfully) {
             checkRiskThreshold(repoPath, nonVirtualRepoPaths);
+            checkLicenseAllowance(repoPath, nonVirtualRepoPaths);
         }
     }
 
@@ -127,7 +129,7 @@ public class ScaPlugin {
         try {
             var path = repoPath.getPath();
             if (path == null) {
-                _logger.error("SCA was unable to complete verification. The Path was not provided.");
+                _logger.error("SCA was unable to complete verification. The path was not provided.");
                 return false;
             }
 
@@ -145,10 +147,22 @@ public class ScaPlugin {
             var thresholdChecker = _injector.getInstance(SecurityThresholdChecker.class);
             thresholdChecker.checkSecurityRiskThreshold(repoPath, nonVirtualRepoPaths);
         } catch (CancelException ex) {
-            _logger.info(format("The download was blocked by configuration. Artifact Name: %s", repoPath.getName()));
+            _logger.info(format("The download was blocked by security threshold configuration. Artifact Name: %s", repoPath.getName()));
             throw ex;
         } catch (Exception ex) {
             _logger.error(format("SCA was unable to complete the security risk threshold verification for the Artifact: %s.\nException: %s", repoPath.getName(), ex));
+        }
+    }
+
+    private void checkLicenseAllowance(@Nonnull RepoPath repoPath, @Nonnull ArrayList<RepoPath> nonVirtualRepoPaths){
+        try {
+            var licenseAllowanceChecker = _injector.getInstance(LicenseAllowanceChecker.class);
+            licenseAllowanceChecker.checkLicenseAllowance(repoPath, nonVirtualRepoPaths);
+        } catch (CancelException ex) {
+            _logger.info(format("The download was blocked by license allowance configuration. Artifact Name: %s", repoPath.getName()));
+            throw ex;
+        } catch (Exception ex) {
+            _logger.error(format("SCA was unable to complete the license allowance verification for the Artifact: %s.\nException: %s", repoPath.getName(), ex));
         }
     }
 }

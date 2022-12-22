@@ -9,7 +9,8 @@ import com.checkmarx.sca.communication.fallbacks.PyPiFallback;
 import com.checkmarx.sca.configuration.ConfigurationEntry;
 import com.checkmarx.sca.configuration.PluginConfiguration;
 import com.checkmarx.sca.models.ArtifactInfo;
-import com.checkmarx.sca.models.PackageRiskAggregation;
+import com.checkmarx.sca.models.PackageAnalysisAggregation;
+import com.checkmarx.sca.models.PackageLicensesModel;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import com.google.inject.Inject;
@@ -24,8 +25,10 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
+import java.util.List;
 import java.util.MissingResourceException;
 import java.util.concurrent.ExecutionException;
+import java.util.stream.Collectors;
 
 import static java.lang.String.format;
 
@@ -84,7 +87,7 @@ public class ScaHttpClient {
         return artifactInfo;
     }
 
-    public PackageRiskAggregation getRiskAggregationOfArtifact(String packageType, String name, String version) throws ExecutionException, InterruptedException {
+    public PackageAnalysisAggregation getRiskAggregationOfArtifact(String packageType, String name, String version) throws ExecutionException, InterruptedException {
         var request = getRiskAggregationArtifactRequest(packageType, name, version);
 
         var responseFuture = _httpClient.sendAsync(request, HttpResponse.BodyHandlers.ofString());
@@ -93,20 +96,63 @@ public class ScaHttpClient {
         if (risksResponse.statusCode() != 200)
             throw new UnexpectedResponseCodeException(risksResponse.statusCode());
 
-        PackageRiskAggregation packageRiskAggregation;
+        PackageAnalysisAggregation packageAnalysisAggregation;
         try {
-            Type listType = new TypeToken<PackageRiskAggregation>(){}.getType();
+            Type listType = new TypeToken<PackageAnalysisAggregation>(){}.getType();
 
-            packageRiskAggregation = new Gson().fromJson(risksResponse.body(), listType);
+            packageAnalysisAggregation = new Gson().fromJson(risksResponse.body(), listType);
         } catch (Exception ex) {
             throw new UnexpectedResponseBodyException(risksResponse.body());
         }
 
-        if (packageRiskAggregation == null) {
+        if (packageAnalysisAggregation == null) {
             throw new UnexpectedResponseBodyException("");
         }
 
-        return packageRiskAggregation;
+        List<String> licenses = List.of();
+        try{
+            var license= getPackageLicenseOfArtifact(packageType, name, version);
+            if (license.getIdentifiedLicenses() != null && license.getIdentifiedLicenses().size() > 0){
+                licenses = license.getIdentifiedLicenses().stream()
+                        .map(identifiedLicense -> identifiedLicense.getLicense().getName())
+                        .collect(Collectors.toList());
+            }
+        }
+        catch(Exception ex){
+            licenses = List.of();
+        }
+        packageAnalysisAggregation.setLicenses(licenses);
+
+        return packageAnalysisAggregation;
+    }
+
+    private PackageLicensesModel getPackageLicenseOfArtifact(String packageType, String name, String version) throws ExecutionException, InterruptedException {
+        var request = getLicenceArtifactRequest(packageType, name, version);
+
+        var responseFuture = _httpClient.sendAsync(request, HttpResponse.BodyHandlers.ofString());
+
+        var licenseResponse = responseFuture.get();
+
+        if (licenseResponse.statusCode() == 404) {
+            licenseResponse = TryToFallbackLicense(licenseResponse, packageType, name, version);
+        }
+        if (licenseResponse.statusCode() != 200) {
+            throw new UnexpectedResponseCodeException(licenseResponse.statusCode());
+        }
+        PackageLicensesModel packageAnalysisAggregation;
+        try {
+            Type listType = new TypeToken<PackageLicensesModel>(){}.getType();
+
+            packageAnalysisAggregation = new Gson().fromJson(licenseResponse.body(), listType);
+        } catch (Exception ex) {
+            throw new UnexpectedResponseBodyException(licenseResponse.body());
+        }
+
+        if (packageAnalysisAggregation == null) {
+            throw new UnexpectedResponseBodyException("");
+        }
+
+        return packageAnalysisAggregation;
     }
 
     public Boolean suggestPrivatePackage(ArtifactId artifactId) throws ExecutionException, InterruptedException, MissingResourceException {
@@ -132,6 +178,20 @@ public class ScaHttpClient {
                 .header("content-type", "application/json")
                 .header("User-Agent", UserAgent)
                 .POST(HttpRequest.BodyPublishers.ofString(body))
+                .build();
+    }
+
+
+    private HttpRequest getLicenceArtifactRequest(@NotNull String packageType, @NotNull  String name, @NotNull  String version) throws CancelException {
+
+        name = URLEncoder.encode(name, StandardCharsets.UTF_8);
+        version = URLEncoder.encode(version, StandardCharsets.UTF_8);
+
+        var url = format("public/packages/%s/%s/versions/%s/licenses", packageType, name, version);
+
+        return HttpRequest.newBuilder(URI.create(format("%s%s", _apiUrl, url)))
+                .header("User-Agent", UserAgent)
+                .GET()
                 .build();
     }
 
@@ -178,6 +238,28 @@ public class ScaHttpClient {
         }
 
         var artifactResponse = getArtifactInfoResponse(packageType, newName, version);
+
+        if (artifactResponse.statusCode() == 404) {
+            throw new UnexpectedResponseCodeException(artifactResponse.statusCode());
+        }
+
+        return artifactResponse;
+    }
+
+    private HttpResponse<String> TryToFallbackLicense(HttpResponse<String> previousResponse, String packageType, String name, String version) throws ExecutionException, InterruptedException {
+
+        String newName = null;
+        if (packageType.equals(PackageManager.PYPI.packageType())) {
+            newName = _pyPiFallback.applyFallback(name);
+        }
+
+        if (newName == null) {
+            throw new UnexpectedResponseCodeException(previousResponse.statusCode());
+        }
+
+        var artifactRequest = getLicenceArtifactRequest(packageType, newName, version);
+
+        var artifactResponse = _httpClient.sendAsync(artifactRequest, HttpResponse.BodyHandlers.ofString()).get();
 
         if (artifactResponse.statusCode() == 404) {
             throw new UnexpectedResponseCodeException(artifactResponse.statusCode());

@@ -8,6 +8,7 @@ import com.checkmarx.sca.configuration.PluginConfiguration;
 import com.checkmarx.sca.models.ArtifactId;
 import com.checkmarx.sca.scan.ArtifactIdBuilder;
 import com.checkmarx.sca.scan.ArtifactRisksFiller;
+import com.checkmarx.sca.scan.LicenseAllowanceChecker;
 import com.checkmarx.sca.scan.SecurityThresholdChecker;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
@@ -23,7 +24,6 @@ import org.mockito.Mockito;
 import org.slf4j.Logger;
 import java.util.ArrayList;
 import java.util.Properties;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 
 import static org.mockito.ArgumentMatchers.isA;
@@ -55,7 +55,8 @@ public class PrivatePackageSuggestionHandlerTests {
         localRepos.add(repoPath);
 
         privatePackagesSuggestionHandler.suggestPrivatePackage(repoPath, localRepos);
-        PrivatePackageSuggested(client, 1);
+        var expectedCount = 1;
+        PrivatePackageSuggested(client, expectedCount);
         verify(_client, times(1)).suggestPrivatePackage(isA(ArtifactId.class));
         verify(artifactBuilder, atLeast(1)).getArtifactId(isA(FileLayoutInfo.class), isA(RepoPath.class), isA(PackageManager.class));
     }
@@ -68,6 +69,7 @@ public class PrivatePackageSuggestionHandlerTests {
         var logger = Mockito.mock(Logger.class);
         var artifactRisksFiller = mock(ArtifactRisksFiller.class);
         var securityThresholdChecker = mock(SecurityThresholdChecker.class);
+        var licenseAllowanceChecker = mock(LicenseAllowanceChecker.class);
 
         var properties = new Properties();
         properties.setProperty("sca.api.url", "http://localhost:8080/");
@@ -82,7 +84,7 @@ public class PrivatePackageSuggestionHandlerTests {
         Mockito.when(repositories.getLayoutInfo(isA(RepoPath.class))).thenReturn(Mockito.mock(FileLayoutInfo.class));
         var suggestionHandler = new PrivatePackageSuggestionHandler(repositories, true);
 
-        var appInjector = new AppInjector(logger, accessControlClient, artifactRisksFiller, configuration, securityThresholdChecker, suggestionHandler);
+        var appInjector = new AppInjector(logger, accessControlClient, artifactRisksFiller, configuration, securityThresholdChecker, licenseAllowanceChecker, suggestionHandler);
 
         var artifactId = Mockito.mock(ArtifactId.class);
         Mockito.when(artifactId.isInvalid()).thenReturn(false);

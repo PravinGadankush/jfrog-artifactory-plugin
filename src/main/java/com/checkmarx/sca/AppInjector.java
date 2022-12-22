@@ -2,8 +2,8 @@ package com.checkmarx.sca;
 
 import com.checkmarx.sca.communication.AccessControlClient;
 import com.checkmarx.sca.configuration.PluginConfiguration;
-import com.checkmarx.sca.scan.ArtifactIdBuilder;
 import com.checkmarx.sca.scan.ArtifactRisksFiller;
+import com.checkmarx.sca.scan.LicenseAllowanceChecker;
 import com.checkmarx.sca.scan.SecurityThresholdChecker;
 import com.checkmarx.sca.suggestion.PrivatePackageSuggestionHandler;
 import com.google.inject.AbstractModule;
@@ -17,6 +17,7 @@ public class AppInjector extends AbstractModule {
     private final ArtifactRisksFiller _artifactFiller;
     private final AccessControlClient _accessControlClient;
     private final SecurityThresholdChecker _securityThresholdChecker;
+    private final LicenseAllowanceChecker _licenseAllowanceChecker;
     private final PluginConfiguration _configuration;
     private final PrivatePackageSuggestionHandler _suggestionHandler;
 
@@ -25,12 +26,14 @@ public class AppInjector extends AbstractModule {
                        @Nonnull ArtifactRisksFiller artifactFiller,
                        @Nonnull PluginConfiguration configuration,
                        @Nonnull SecurityThresholdChecker securityThresholdChecker,
+                       @Nonnull LicenseAllowanceChecker licenseAllowanceChecker,
                        @Nonnull PrivatePackageSuggestionHandler privatePackagesSuggestionHandler) {
         _logger = logger;
         _configuration = configuration;
         _artifactFiller = artifactFiller;
         _accessControlClient = accessControlClient;
         _securityThresholdChecker = securityThresholdChecker;
+        _licenseAllowanceChecker = licenseAllowanceChecker;
         _suggestionHandler = privatePackagesSuggestionHandler;
     }
 
@@ -40,6 +43,7 @@ public class AppInjector extends AbstractModule {
         bind(ArtifactRisksFiller.class).toInstance(_artifactFiller);
         bind(PluginConfiguration.class).toInstance(_configuration);
         bind(SecurityThresholdChecker.class).toInstance(_securityThresholdChecker);
+        bind(LicenseAllowanceChecker.class).toInstance(_licenseAllowanceChecker);
         bind(PrivatePackageSuggestionHandler.class).toInstance(_suggestionHandler);
 
         if (_accessControlClient != null) {

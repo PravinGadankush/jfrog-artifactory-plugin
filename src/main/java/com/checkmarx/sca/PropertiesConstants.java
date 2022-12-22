@@ -11,4 +11,7 @@ public class PropertiesConstants {
     public static final String LAST_SCAN = "CxSCA.LastScanned";
 
     public static final String IGNORE_THRESHOLD = "CxSCA.IgnoreRiskThreshold";
+
+    public static final String IGNORE_LICENSE = "CxSCA.IgnoreLicenses";
+    public static final String LICENSE_NAMES = "CxSCA.Licenses";
 }

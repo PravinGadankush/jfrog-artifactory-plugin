@@ -59,6 +59,7 @@ public class PluginConfiguration {
         validateAuthConfig();
         validateExpirationConfig();
         validateSeverityThresholdConfig();
+        validateLicensesAllowedConfig();
     }
 
     private void validateExpirationConfig() {
@@ -88,6 +89,21 @@ public class PluginConfiguration {
                 SecurityRiskThreshold.valueOf(threshold.trim().toUpperCase());
             } catch (Exception ex) {
                 this.logger.error(format("Error converting the 'sca.security.risk.threshold' configuration value, we will use the default value (LOW). Exception Message: %s.", ex.getMessage()));
+                throw ex;
+            }
+        }
+    }
+
+    private void validateLicensesAllowedConfig() {
+        var allowance = getProperty(ConfigurationEntry.LICENSES_ALLOWED);
+
+        if (allowance != null) {
+            try {
+                var licenses = allowance.split(",");
+                var validLicenses = Arrays.stream(licenses).filter(license-> !license.isEmpty()).distinct();
+            } catch (Exception ex) {
+                this.logger.error(format("Error converting '%s' configuration value, no license restrictions applied. Exception Message: %s.",
+                        ConfigurationEntry.LICENSES_ALLOWED.propertyKey(), ex.getMessage()));
                 throw ex;
             }
         }

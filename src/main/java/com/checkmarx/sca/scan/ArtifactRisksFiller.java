@@ -9,7 +9,7 @@ import com.checkmarx.sca.configuration.ConfigurationEntry;
 import com.checkmarx.sca.configuration.PluginConfiguration;
 import com.checkmarx.sca.models.ArtifactId;
 import com.checkmarx.sca.models.ArtifactInfo;
-import com.checkmarx.sca.models.PackageRiskAggregation;
+import com.checkmarx.sca.models.PackageAnalysisAggregation;
 import com.google.inject.Inject;
 import org.artifactory.md.Properties;
 import org.artifactory.repo.RepoPath;
@@ -19,6 +19,7 @@ import org.slf4j.Logger;
 import javax.annotation.Nonnull;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.List;
 
 import static java.lang.String.format;
 
@@ -84,7 +85,7 @@ public class ArtifactRisksFiller {
 
         var risksAddedSuccessfully = false;
         if (packageRiskAggregation != null) {
-            addArtifactRiskInfo(nonVirtualRepoPaths, packageRiskAggregation);
+            addArtifactAnalysisInfo(nonVirtualRepoPaths, packageRiskAggregation);
             risksAddedSuccessfully = true;
         }
 
@@ -166,7 +167,7 @@ public class ArtifactRisksFiller {
         return notNugetPackage || notGoPackage || notCocoaPodsPackage || jsonFile || htmlFile;
     }
 
-    private PackageRiskAggregation scanArtifact(@Nonnull ArtifactId artifactId) {
+    private PackageAnalysisAggregation scanArtifact(@Nonnull ArtifactId artifactId) {
         ArtifactInfo artifactInfo;
         try {
             artifactInfo = _scaHttpClient.getArtifactInformation(artifactId.PackageType, artifactId.Name, artifactId.Version);
@@ -190,19 +191,21 @@ public class ArtifactRisksFiller {
         }
     }
 
-    private void addArtifactRiskInfo(@Nonnull ArrayList<RepoPath> repoPaths, @Nonnull PackageRiskAggregation packageRiskAggregation) {
+    private void addArtifactAnalysisInfo(@Nonnull ArrayList<RepoPath> repoPaths, @Nonnull PackageAnalysisAggregation packageAnalysisAggregation) {
         for (var repoPath : repoPaths) {
             try{
-                addArtifactRisksInfo(repoPath, packageRiskAggregation);
+                addArtifactAnalysisInfo(repoPath, packageAnalysisAggregation);
             } catch (Exception ex) {
                 _logger.error(format("Failed to add risks information to the properties. Exception Message: %s. Artifact Name: %s.", ex.getMessage(), repoPath.getName()));
             }
         }
     }
 
-    private void addArtifactRisksInfo(RepoPath repoPath, PackageRiskAggregation packageRiskAggregation) {
+    private void addArtifactAnalysisInfo(RepoPath repoPath, PackageAnalysisAggregation packageAnalysisAggregation) {
 
-        var vulnerabilitiesAggregation = packageRiskAggregation.getVulnerabilitiesAggregation();
+        var vulnerabilitiesAggregation = packageAnalysisAggregation.getVulnerabilitiesAggregation();
+        var licenceTypes = packageAnalysisAggregation.getLicenses();
+        if(licenceTypes == null) licenceTypes = List.of();
 
         _repositories.setProperty(repoPath, PropertiesConstants.TOTAL_RISKS_COUNT, String.valueOf(vulnerabilitiesAggregation.getVulnerabilitiesCount()));
         _repositories.setProperty(repoPath, PropertiesConstants.LOW_RISKS_COUNT, String.valueOf(vulnerabilitiesAggregation.getLowRiskCount()));
@@ -211,5 +214,6 @@ public class ArtifactRisksFiller {
         _repositories.setProperty(repoPath, PropertiesConstants.RISK_SCORE, String.valueOf(vulnerabilitiesAggregation.getMaxRiskScore()));
         _repositories.setProperty(repoPath, PropertiesConstants.RISK_LEVEL, vulnerabilitiesAggregation.getMaxRiskSeverity());
         _repositories.setProperty(repoPath, PropertiesConstants.LAST_SCAN, Instant.now().toString());
+        _repositories.setProperty(repoPath, PropertiesConstants.LICENSE_NAMES, String.join(",",licenceTypes));
     }
 }
