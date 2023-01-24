@@ -50,6 +50,15 @@ pipeline{
                 }
             }
         }
+        stage('Calculate SHA-256 for artifacts'){
+            steps{
+                sh '''
+                    for FILE in ${ARTIFACTS_DIRECTORY}/*; do
+                        sha256sum $FILE | cut -d ' ' -f 1 | tr -d $'\n' > $FILE.sha256sum
+                    done
+                '''
+            }
+        }
         stage("Publish"){
             steps{
                 withAWS([credentials: 's3publish', region: 'eu-central-1']) {
