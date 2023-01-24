@@ -8,7 +8,7 @@ services:
     image: buildimage-jfrog
     user: "0:0"
     volumes:
-      - ./cxsca-security-plugin.properties:/opt/jfrog/artifactory/var/etc/artifactory/plugins/cxsca-security-plugin.properties
+      - ./src/main/groovy/com/checkmarx/sca/cxsca-security-plugin.properties:/opt/jfrog/artifactory/var/etc/artifactory/plugins/cxsca-security-plugin.properties
       - cxsca-log:/opt/jfrog/artifactory/var/log/
       - ./nginx.crt:/var/opt/jfrog/artifactory/data/nginx/ssl/nginx.crt
       - ./nginx.key:/var/opt/jfrog/artifactory/data/nginx/ssl/nginx.key

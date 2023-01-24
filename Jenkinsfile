@@ -13,7 +13,7 @@ pipeline{
     environment {
         MASTER_BRANCH = "master"
         ARTIFACTS_DIRECTORY = "artifacts"
-        VERSION = pipelineUtils.getSemanticVersion(1, 0)
+        VERSION = pipelineUtils.getSemanticVersion(1, 1)
     }
 
     agent { node { label 'docker' } }

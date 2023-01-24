@@ -54,14 +54,6 @@ public class ScaHttpClient {
         _httpClient = HttpClient.newHttpClient();
     }
 
-    private HttpResponse<String> getArtifactInfoResponse(String packageType, String name, String version) throws ExecutionException, InterruptedException {
-        var request = getArtifactInfoRequest(packageType, name, version);
-
-        var responseFuture = _httpClient.sendAsync(request, HttpResponse.BodyHandlers.ofString());
-
-        return responseFuture.get();
-    }
-
     public ArtifactInfo getArtifactInformation(String packageType, String name, String version) throws ExecutionException, InterruptedException {
 
         var artifactResponse = getArtifactInfoResponse(packageType, name, version);
@@ -98,7 +90,8 @@ public class ScaHttpClient {
 
         PackageAnalysisAggregation packageAnalysisAggregation;
         try {
-            Type listType = new TypeToken<PackageAnalysisAggregation>(){}.getType();
+            Type listType = new TypeToken<PackageAnalysisAggregation>() {
+            }.getType();
 
             packageAnalysisAggregation = new Gson().fromJson(risksResponse.body(), listType);
         } catch (Exception ex) {
@@ -110,47 +103,17 @@ public class ScaHttpClient {
         }
 
         List<String> licenses = List.of();
-        try{
-            var license= getPackageLicenseOfArtifact(packageType, name, version);
-            if (license.getIdentifiedLicenses() != null && license.getIdentifiedLicenses().size() > 0){
+        try {
+            var license = getPackageLicenseOfArtifact(packageType, name, version);
+            if (license.getIdentifiedLicenses() != null && license.getIdentifiedLicenses().size() > 0) {
                 licenses = license.getIdentifiedLicenses().stream()
                         .map(identifiedLicense -> identifiedLicense.getLicense().getName())
                         .collect(Collectors.toList());
             }
-        }
-        catch(Exception ex){
+        } catch (Exception ex) {
             licenses = List.of();
         }
         packageAnalysisAggregation.setLicenses(licenses);
-
-        return packageAnalysisAggregation;
-    }
-
-    private PackageLicensesModel getPackageLicenseOfArtifact(String packageType, String name, String version) throws ExecutionException, InterruptedException {
-        var request = getLicenceArtifactRequest(packageType, name, version);
-
-        var responseFuture = _httpClient.sendAsync(request, HttpResponse.BodyHandlers.ofString());
-
-        var licenseResponse = responseFuture.get();
-
-        if (licenseResponse.statusCode() == 404) {
-            licenseResponse = TryToFallbackLicense(licenseResponse, packageType, name, version);
-        }
-        if (licenseResponse.statusCode() != 200) {
-            throw new UnexpectedResponseCodeException(licenseResponse.statusCode());
-        }
-        PackageLicensesModel packageAnalysisAggregation;
-        try {
-            Type listType = new TypeToken<PackageLicensesModel>(){}.getType();
-
-            packageAnalysisAggregation = new Gson().fromJson(licenseResponse.body(), listType);
-        } catch (Exception ex) {
-            throw new UnexpectedResponseBodyException(licenseResponse.body());
-        }
-
-        if (packageAnalysisAggregation == null) {
-            throw new UnexpectedResponseBodyException("");
-        }
 
         return packageAnalysisAggregation;
     }
@@ -177,12 +140,12 @@ public class ScaHttpClient {
         return HttpRequest.newBuilder(URI.create(format("%s%s", _apiUrl, "public/risk-aggregation/aggregated-risks")))
                 .header("content-type", "application/json")
                 .header("User-Agent", UserAgent)
+                .header("cxorigin", getCxOrigin())
                 .POST(HttpRequest.BodyPublishers.ofString(body))
                 .build();
     }
 
-
-    private HttpRequest getLicenceArtifactRequest(@NotNull String packageType, @NotNull  String name, @NotNull  String version) throws CancelException {
+    private HttpRequest getLicenceArtifactRequest(@NotNull String packageType, @NotNull String name, @NotNull String version) throws CancelException {
 
         name = URLEncoder.encode(name, StandardCharsets.UTF_8);
         version = URLEncoder.encode(version, StandardCharsets.UTF_8);
@@ -191,6 +154,7 @@ public class ScaHttpClient {
 
         return HttpRequest.newBuilder(URI.create(format("%s%s", _apiUrl, url)))
                 .header("User-Agent", UserAgent)
+                .header("cxorigin", getCxOrigin())
                 .GET()
                 .build();
     }
@@ -204,6 +168,7 @@ public class ScaHttpClient {
 
         return HttpRequest.newBuilder(URI.create(format("%s%s", _apiUrl, artifactPath)))
                 .header("User-Agent", UserAgent)
+                .header("cxorigin", getCxOrigin())
                 .GET()
                 .build();
     }
@@ -222,6 +187,7 @@ public class ScaHttpClient {
                 .header(authHeader.getKey(), authHeader.getValue())
                 .header("content-type", "application/json")
                 .header("User-Agent", UserAgent)
+                .header("cxorigin", getCxOrigin())
                 .POST(HttpRequest.BodyPublishers.ofString(body))
                 .build();
     }
@@ -266,5 +232,49 @@ public class ScaHttpClient {
         }
 
         return artifactResponse;
+    }
+
+    private HttpResponse<String> getArtifactInfoResponse(String packageType, String name, String version) throws ExecutionException, InterruptedException {
+        var request = getArtifactInfoRequest(packageType, name, version);
+
+        var responseFuture = _httpClient.sendAsync(request, HttpResponse.BodyHandlers.ofString());
+
+        return responseFuture.get();
+    }
+
+    private PackageLicensesModel getPackageLicenseOfArtifact(String packageType, String name, String version) throws ExecutionException, InterruptedException {
+        var request = getLicenceArtifactRequest(packageType, name, version);
+
+        var responseFuture = _httpClient.sendAsync(request, HttpResponse.BodyHandlers.ofString());
+
+        var licenseResponse = responseFuture.get();
+
+        if (licenseResponse.statusCode() == 404) {
+            licenseResponse = TryToFallbackLicense(licenseResponse, packageType, name, version);
+        }
+        if (licenseResponse.statusCode() != 200) {
+            throw new UnexpectedResponseCodeException(licenseResponse.statusCode());
+        }
+        PackageLicensesModel packageAnalysisAggregation;
+        try {
+            Type listType = new TypeToken<PackageLicensesModel>() {
+            }.getType();
+
+            packageAnalysisAggregation = new Gson().fromJson(licenseResponse.body(), listType);
+        } catch (Exception ex) {
+            throw new UnexpectedResponseBodyException(licenseResponse.body());
+        }
+
+        if (packageAnalysisAggregation == null) {
+            throw new UnexpectedResponseBodyException("");
+        }
+
+        return packageAnalysisAggregation;
+    }
+
+    private String getCxOrigin(){
+        Package p = getClass().getPackage();
+        var version = p.getImplementationVersion() != null ? p.getImplementationVersion() : "1.0.0";
+        return String.format("JFrog %s", version);
     }
 }

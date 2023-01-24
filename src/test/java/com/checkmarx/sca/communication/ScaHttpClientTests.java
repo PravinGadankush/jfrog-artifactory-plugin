@@ -50,6 +50,7 @@ public class ScaHttpClientTests {
 
         this.wireMockServer.stubFor(
                 WireMock.get("/public/packages/Npm/lodash/0.2.1")
+                        .withHeader("cxorigin", matching("JFrog .*"))
                         .willReturn(ok()
                                 .withHeader("Content-Type", "application/json; charset=UTF-8")
                                 .withBody("{\"id\":{\"identifier\":\"Npm-lodash-0.2.1\"},\"name\":\"lodash\",\"version\":\"0.2.1\",\"type\":\"Npm\",\"releaseDate\":\"2012-05-24T21:53:08\",\"description\":\"A drop-in replacement for Underscore.js that delivers performance improvements, bug fixes, and additional features.\",\"repositoryUrl\":\"git://github.com/bestiejs/lodash.git\",\"binaryUrl\":\"https://registry.npmjs.org/lodash/-/lodash-0.2.1.tgz\",\"projectUrl\":\"\",\"bugsUrl\":null,\"sourceUrl\":\"\",\"projectHomePage\":\"http://lodash.com\",\"homePage\":\"\",\"license\":\"\",\"summary\":\"\",\"url\":\"\",\"owner\":\"\"}"))
@@ -71,11 +72,13 @@ public class ScaHttpClientTests {
 
         this.wireMockServer.stubFor(
                 WireMock.get("/public/packages/python/google_parser/0.0.135")
+                        .withHeader("cxorigin", matching("JFrog .*"))
                         .willReturn(aResponse().withStatus(404))
         );
 
         this.wireMockServer.stubFor(
                 WireMock.get("/public/packages/python/google-parser/0.0.135")
+                        .withHeader("cxorigin", matching("JFrog .*"))
                         .willReturn(ok()
                                 .withHeader("Content-Type", "application/json; charset=UTF-8")
                                 .withBody("{\"id\":{\"identifier\":\"Python-google-parser-0.0.135\"},\"name\":\"google-parser\",\"version\":\"0.0.135\",\"type\":\"Python\",\"releaseDate\":\"2021-11-22T11:43:16\",\"description\":\"\",\"repositoryUrl\":\"\",\"binaryUrl\":\"\",\"projectUrl\":\"https://pypi.org/project/google-parser/\",\"bugsUrl\":\"\",\"sourceUrl\":\"\",\"projectHomePage\":\"\",\"homePage\":\"https://github.com/KokocGroup/google-parser\",\"license\":\"\",\"summary\":\"Convert html to snippets\",\"url\":\"https://pypi.org/project/google-parser/\",\"owner\":\"\"}"))
@@ -97,6 +100,7 @@ public class ScaHttpClientTests {
 
         this.wireMockServer.stubFor(
                 WireMock.get("/public/packages/Npm/lodash/0.2.1")
+                        .withHeader("cxorigin", matching("JFrog .*"))
                         .willReturn(aResponse().withStatus(404))
         );
 
@@ -115,6 +119,7 @@ public class ScaHttpClientTests {
 
         this.wireMockServer.stubFor(
                 WireMock.get("/public/packages/Npm/lodash/0.2.1")
+                        .withHeader("cxorigin", matching("JFrog .*"))
                         .willReturn(aResponse().withStatus(500))
         );
 
@@ -133,6 +138,7 @@ public class ScaHttpClientTests {
 
         this.wireMockServer.stubFor(
                 WireMock.get("/public/packages/Npm/lodash/0.2.1")
+                        .withHeader("cxorigin", matching("JFrog .*"))
                         .willReturn(ok())
         );
 
@@ -149,6 +155,7 @@ public class ScaHttpClientTests {
 
         this.wireMockServer.stubFor(
                 WireMock.post("/public/risk-aggregation/aggregated-risks")
+                        .withHeader("cxorigin", matching("JFrog .*"))
                         .withRequestBody(containing("{\"packageName\":\"lodash\",\"version\":\"0.2.1\",\"packageManager\":\"Npm\"}"))
                         .willReturn(ok()
                                 .withHeader("Content-Type", "application/json; charset=UTF-8")
@@ -175,6 +182,7 @@ public class ScaHttpClientTests {
 
         this.wireMockServer.stubFor(
                 WireMock.post("/public/risk-aggregation/aggregated-risks")
+                        .withHeader("cxorigin", matching("JFrog .*"))
                         .withRequestBody(containing("{\"packageName\":\"lodash\",\"version\":\"0.2.1\",\"packageManager\":\"Npm\"}"))
                         .willReturn(aResponse().withStatus(500))
         );
@@ -192,6 +200,7 @@ public class ScaHttpClientTests {
 
         this.wireMockServer.stubFor(
                 WireMock.post("/public/risk-aggregation/aggregated-risks")
+                        .withHeader("cxorigin", matching("JFrog .*"))
                         .withRequestBody(containing("{\"packageName\":\"lodash\",\"version\":\"0.2.1\",\"packageManager\":\"Npm\"}"))
                         .willReturn(ok())
         );
@@ -209,8 +218,9 @@ public class ScaHttpClientTests {
 
         this.wireMockServer.stubFor(
                 WireMock.post("/private-dependencies-repository/dependencies")
-                            .withRequestBody(containing("[{\"name\":\"lodash\",\"packageManager\":\"Npm\",\"version\":\"0.2.1\",\"origin\":\"PrivateArtifactory\"}]"))
-                            .willReturn(ok())
+                        .withHeader("cxorigin", matching("JFrog .*"))
+                        .withRequestBody(containing("[{\"name\":\"lodash\",\"packageManager\":\"Npm\",\"version\":\"0.2.1\",\"origin\":\"PrivateArtifactory\"}]"))
+                        .willReturn(ok())
         );
 
         var injector = CreateAppInjectorForTests();
@@ -228,6 +238,7 @@ public class ScaHttpClientTests {
 
         this.wireMockServer.stubFor(
                 WireMock.post("/private-dependencies-repository/dependencies")
+                        .withHeader("cxorigin", matching("JFrog .*"))
                         .withRequestBody(containing("[{\"name\":\"lodash\",\"packageManager\":\"Npm\",\"version\":\"0.2.1\",\"origin\":\"PrivateArtifactory\"}]"))
                         .willReturn(aResponse().withStatus(500))
         );
@@ -239,7 +250,7 @@ public class ScaHttpClientTests {
         Assertions.assertThrows(UnexpectedResponseBodyException.class, () -> scaHttpClient.suggestPrivatePackage(new ArtifactId("Npm", "lodash", "0.2.1")));
     }
 
-    private Injector CreateAppInjectorForTests(){
+    private Injector CreateAppInjectorForTests() {
         var logger = Mockito.mock(Logger.class);
         var artifactFiller = Mockito.mock(ArtifactRisksFiller.class);
         var securityThresholdChecker = Mockito.mock(SecurityThresholdChecker.class);
