@@ -3,8 +3,12 @@ package com.checkmarx.sca.models;
 import com.google.gson.annotations.SerializedName;
 
 public class ArtifactInfo {
-    @SerializedName("id")
-    private ArtifactId _id;
+
+    @SerializedName("packageId")
+    private String _packageId;
+
+    @SerializedName("legacyPackageId")
+    private String _legacyPackageId;
 
     @SerializedName("name")
     private String _name;
@@ -21,41 +25,14 @@ public class ArtifactInfo {
     @SerializedName("description")
     private String _description;
 
-    @SerializedName("repositoryUrl")
-    private String _repositoryUrl;
-
-    @SerializedName("binaryUrl")
-    private String _binaryUrl;
-
     @SerializedName("projectUrl")
     private String _projectUrl;
-
-    @SerializedName("bugsUrl")
-    private Object bugsUrl;
-
-    @SerializedName("sourceUrl")
-    private String _sourceUrl;
 
     @SerializedName("projectHomePage")
     private String _projectHomePage;
 
-    @SerializedName("homePage")
-    private String _homePage;
-
-    @SerializedName("license")
-    private String _license;
-
-    @SerializedName("summary")
-    private String _summary;
-
-    @SerializedName("url")
-    private String _url;
-
-    @SerializedName("owner")
-    private String _owner;
-
-    public ArtifactId getId() {
-        return _id;
+    public String getId() {
+        return _legacyPackageId;
     }
 
     public String getPackageType() {

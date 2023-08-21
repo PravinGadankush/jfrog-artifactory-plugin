@@ -164,7 +164,7 @@ public class ScaHttpClient {
         name = URLEncoder.encode(name, StandardCharsets.UTF_8);
         version = URLEncoder.encode(version, StandardCharsets.UTF_8);
 
-        var artifactPath = format("public/packages/%s/%s/%s", packageType, name, version);
+        var artifactPath = format("public/packages/%s/%s/versions/%s", packageType, name, version);
 
         return HttpRequest.newBuilder(URI.create(format("%s%s", _apiUrl, artifactPath)))
                 .header("User-Agent", UserAgent)

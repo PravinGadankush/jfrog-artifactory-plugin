@@ -171,7 +171,7 @@ public class ArtifactRisksFiller {
         ArtifactInfo artifactInfo;
         try {
             artifactInfo = _scaHttpClient.getArtifactInformation(artifactId.PackageType, artifactId.Name, artifactId.Version);
-            _logger.debug(format("For CxSCA the artifact is identified by %s.", artifactInfo.getId().getIdentifier()));
+            _logger.debug(format("For CxSCA the artifact is identified by %s.", artifactInfo.getId()));
         } catch (Exception ex) {
 
             if (ex instanceof UnexpectedResponseCodeException && ((UnexpectedResponseCodeException)ex).StatusCode == 404) {

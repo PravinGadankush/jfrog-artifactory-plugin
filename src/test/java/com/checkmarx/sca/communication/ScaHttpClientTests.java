@@ -49,11 +49,11 @@ public class ScaHttpClientTests {
     public void getArtifactInformationWithSuccess() throws ExecutionException, InterruptedException {
 
         this.wireMockServer.stubFor(
-                WireMock.get("/public/packages/Npm/lodash/0.2.1")
+                WireMock.get("/public/packages/Npm/lodash/versions/0.2.1")
                         .withHeader("cxorigin", matching("JFrog .*"))
                         .willReturn(ok()
                                 .withHeader("Content-Type", "application/json; charset=UTF-8")
-                                .withBody("{\"id\":{\"identifier\":\"Npm-lodash-0.2.1\"},\"name\":\"lodash\",\"version\":\"0.2.1\",\"type\":\"Npm\",\"releaseDate\":\"2012-05-24T21:53:08\",\"description\":\"A drop-in replacement for Underscore.js that delivers performance improvements, bug fixes, and additional features.\",\"repositoryUrl\":\"git://github.com/bestiejs/lodash.git\",\"binaryUrl\":\"https://registry.npmjs.org/lodash/-/lodash-0.2.1.tgz\",\"projectUrl\":\"\",\"bugsUrl\":null,\"sourceUrl\":\"\",\"projectHomePage\":\"http://lodash.com\",\"homePage\":\"\",\"license\":\"\",\"summary\":\"\",\"url\":\"\",\"owner\":\"\"}"))
+                                .withBody("{\"packageId\":\"Npm#-#lodash#-#0.2.1\",\"legacyPackageId\":\"Npm-lodash-0.2.1\",\"type\":\"Npm\",\"name\":\"lodash\",\"version\":\"0.2.1\",\"description\":\"A drop-in replacement for Underscore.js that delivers performance improvements\",\"projectHomePage\":\"http://lodash.com\",\"releaseDate\":\"2012-05-24T21:53:08.449+00:00\",\"keywords\":[\"browser\"],\"authors\":\"John-David Dalton\",\"binaryUrl\":\"https://registry.npmjs.org/lodash/-/lodash-0.2.1.tgz\",\"mainFile\":\"lodash\",\"authorUrl\":\"http://allyoucanleet.com/\",\"authorEmail\":\"john@fusejs.com\",\"bugsUrl\":\"https://github.com/bestiejs/lodash/issues\",\"dependencies\":\"{}\",\"sourceRepository\":\"git://github.com/bestiejs/lodash.git\",\"repositoryType\":\"git\",\"preRelease\":false,\"requirements\":[],\"source\":\"NPM\"}"))
         );
 
         var injector = CreateAppInjectorForTests();
@@ -63,7 +63,7 @@ public class ScaHttpClientTests {
         var artifactInfo = scaHttpClient.getArtifactInformation("Npm", "lodash", "0.2.1");
 
         Assertions.assertNotNull(artifactInfo);
-        Assertions.assertEquals("Npm-lodash-0.2.1", artifactInfo.getId().getIdentifier());
+        Assertions.assertEquals("Npm-lodash-0.2.1", artifactInfo.getId());
     }
 
     @DisplayName("Get artifact information with success after PyPi retry")
@@ -71,17 +71,17 @@ public class ScaHttpClientTests {
     public void getArtifactInformationWithSuccessAfterPyPiRetry() throws ExecutionException, InterruptedException {
 
         this.wireMockServer.stubFor(
-                WireMock.get("/public/packages/python/google_parser/0.0.135")
+                WireMock.get("/public/packages/python/google_parser/versions/0.0.135")
                         .withHeader("cxorigin", matching("JFrog .*"))
                         .willReturn(aResponse().withStatus(404))
         );
 
         this.wireMockServer.stubFor(
-                WireMock.get("/public/packages/python/google-parser/0.0.135")
+                WireMock.get("/public/packages/python/google-parser/versions/0.0.135")
                         .withHeader("cxorigin", matching("JFrog .*"))
                         .willReturn(ok()
                                 .withHeader("Content-Type", "application/json; charset=UTF-8")
-                                .withBody("{\"id\":{\"identifier\":\"Python-google-parser-0.0.135\"},\"name\":\"google-parser\",\"version\":\"0.0.135\",\"type\":\"Python\",\"releaseDate\":\"2021-11-22T11:43:16\",\"description\":\"\",\"repositoryUrl\":\"\",\"binaryUrl\":\"\",\"projectUrl\":\"https://pypi.org/project/google-parser/\",\"bugsUrl\":\"\",\"sourceUrl\":\"\",\"projectHomePage\":\"\",\"homePage\":\"https://github.com/KokocGroup/google-parser\",\"license\":\"\",\"summary\":\"Convert html to snippets\",\"url\":\"https://pypi.org/project/google-parser/\",\"owner\":\"\"}"))
+                                .withBody("{\"packageId\":\"Python#-#google-parser#-#0.0.135\",\"legacyPackageId\":\"Python-google-parser-0.0.135\",\"type\":\"Python\",\"name\":\"google-parser\",\"version\":\"0.0.135\",\"projectHomePage\":\"https://github.com/KokocGroup/google-parser\",\"releaseDate\":\"2021-11-22T11:43:16+00:00\",\"keywords\":[],\"projectUrl\":\"https://pypi.org/project/google-parser/\",\"sourceRepository\":\"https://github.com/KokocGroup/google-parser\",\"preRelease\":false,\"requirements\":[],\"packageFiles\":\"\"}"))
         );
 
         var injector = CreateAppInjectorForTests();
@@ -91,7 +91,7 @@ public class ScaHttpClientTests {
         var artifactInfo = scaHttpClient.getArtifactInformation("python", "google_parser", "0.0.135");
 
         Assertions.assertNotNull(artifactInfo);
-        Assertions.assertEquals("Python-google-parser-0.0.135", artifactInfo.getId().getIdentifier());
+        Assertions.assertEquals("Python-google-parser-0.0.135", artifactInfo.getId());
     }
 
     @DisplayName("Failed to get artifact information - Not found")
@@ -99,7 +99,7 @@ public class ScaHttpClientTests {
     public void failedToGetArtifactInformationNotFound() {
 
         this.wireMockServer.stubFor(
-                WireMock.get("/public/packages/Npm/lodash/0.2.1")
+                WireMock.get("/public/packages/Npm/lodash/versions/0.2.1")
                         .withHeader("cxorigin", matching("JFrog .*"))
                         .willReturn(aResponse().withStatus(404))
         );
@@ -118,7 +118,7 @@ public class ScaHttpClientTests {
     public void failed() {
 
         this.wireMockServer.stubFor(
-                WireMock.get("/public/packages/Npm/lodash/0.2.1")
+                WireMock.get("/public/packages/Npm/lodash/versions/0.2.1")
                         .withHeader("cxorigin", matching("JFrog .*"))
                         .willReturn(aResponse().withStatus(500))
         );
@@ -137,7 +137,7 @@ public class ScaHttpClientTests {
     public void failedToGetArtifactInformationUnexpectedResponseBody() {
 
         this.wireMockServer.stubFor(
-                WireMock.get("/public/packages/Npm/lodash/0.2.1")
+                WireMock.get("/public/packages/Npm/lodash/versions/0.2.1")
                         .withHeader("cxorigin", matching("JFrog .*"))
                         .willReturn(ok())
         );
