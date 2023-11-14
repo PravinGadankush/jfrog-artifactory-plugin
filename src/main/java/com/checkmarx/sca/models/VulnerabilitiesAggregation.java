@@ -9,6 +9,9 @@ public class VulnerabilitiesAggregation {
     @SerializedName("maxRiskSeverity")
     private String _maxRiskSeverity;
 
+    @SerializedName("criticalRiskCount")
+    private int _criticalRiskCount;
+
     @SerializedName("maxRiskScore")
     private double _maxRiskScore;
 
@@ -31,6 +34,10 @@ public class VulnerabilitiesAggregation {
 
     public double getMaxRiskScore(){
         return _maxRiskScore;
+    }
+
+    public int getCriticalRiskCount(){
+        return _criticalRiskCount;
     }
 
     public int getHighRiskCount(){

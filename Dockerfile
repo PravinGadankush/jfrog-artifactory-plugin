@@ -35,11 +35,11 @@ COPY --from=build /build/lib/sca-artifactory-plugin.jar .
 
 WORKDIR /opt/jfrog/artifactory
 
-FROM 882696877841.dkr.ecr.eu-central-1.amazonaws.com/source-resolver:master-base-latest AS test
+FROM 882696877841.dkr.ecr.eu-central-1.amazonaws.com/sca-resolver:master-latest AS test
 
 RUN apt update && apt install -y docker.io iputils-ping
 
-RUN rm /usr/share/maven/conf/settings.xml
+RUN rm -rf /usr/share/maven/conf/settings.xml /ScaResolver /E2E /syft build/coverage
 
 RUN gem install cocoapods-art
 

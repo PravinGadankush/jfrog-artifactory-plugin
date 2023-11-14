@@ -17,8 +17,7 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 
-import static com.checkmarx.sca.PropertiesConstants.HIGH_RISKS_COUNT;
-import static com.checkmarx.sca.PropertiesConstants.IGNORE_THRESHOLD;
+import static com.checkmarx.sca.PropertiesConstants.*;
 import static com.checkmarx.sca.suggestion.PrivatePackageSuggestionHandler.SUGGESTED_KEY;
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
 import static java.lang.String.format;
@@ -62,6 +61,7 @@ public class ScaPluginTest {
         when(repositories.setProperty(isA(RepoPath.class), isA(String.class), isA(String.class))).thenReturn(null);
 
         when(repositories.getProperty(repoPath, HIGH_RISKS_COUNT)).thenReturn("0");
+        when(repositories.getProperty(repoPath, CRITICAL_RISKS_COUNT)).thenReturn("0");
         MockGetProperties(repositories, repoPath, "false");
 
         var logger = Mockito.mock(Logger.class);
@@ -110,6 +110,7 @@ public class ScaPluginTest {
         when(repositories.setProperty(isA(RepoPath.class), isA(String.class), isA(String.class))).thenReturn(null);
 
         when(repositories.getProperty(repoPath, HIGH_RISKS_COUNT)).thenReturn("0");
+        when(repositories.getProperty(repoPath, CRITICAL_RISKS_COUNT)).thenReturn("0");
         MockGetProperties(repositories, repoPath, "false");
 
         var logger = Mockito.mock(Logger.class);
