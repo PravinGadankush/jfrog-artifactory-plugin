@@ -62,10 +62,8 @@ public class SecurityThresholdCheckerTests {
 
         var repoPath = CreateRepoPath();
         MockGetProperty(repoPath, TOTAL_RISKS_COUNT, "0");
-        MockGetProperty(repoPath, LOW_RISKS_COUNT, "0");
         MockGetProperty(repoPath, MEDIUM_RISKS_COUNT, "0");
         MockGetProperty(repoPath, HIGH_RISKS_COUNT, "0");
-        MockGetProperty(repoPath, CRITICAL_RISKS_COUNT, "0");
         MockGetProperties(repoPath);
 
         securityThresholdChecker.checkSecurityRiskThreshold(repoPath, new ArrayList<>(List.of(repoPath)));
@@ -82,10 +80,8 @@ public class SecurityThresholdCheckerTests {
 
         var repoPath = CreateRepoPath();
         MockGetProperty(repoPath, TOTAL_RISKS_COUNT, "15");
-        MockGetProperty(repoPath, LOW_RISKS_COUNT, "15");
         MockGetProperty(repoPath, MEDIUM_RISKS_COUNT, "0");
         MockGetProperty(repoPath, HIGH_RISKS_COUNT, "0");
-        MockGetProperty(repoPath, CRITICAL_RISKS_COUNT, "0");
         MockGetProperties(repoPath);
 
         securityThresholdChecker.checkSecurityRiskThreshold(repoPath, new ArrayList<>(List.of(repoPath)));
@@ -102,10 +98,8 @@ public class SecurityThresholdCheckerTests {
 
         var repoPath = CreateRepoPath();
         MockGetProperty(repoPath, TOTAL_RISKS_COUNT, "15");
-        MockGetProperty(repoPath, LOW_RISKS_COUNT, "15");
         MockGetProperty(repoPath, MEDIUM_RISKS_COUNT, "0");
         MockGetProperty(repoPath, HIGH_RISKS_COUNT, "0");
-        MockGetProperty(repoPath, CRITICAL_RISKS_COUNT, "0");
         MockGetProperties(repoPath);
 
         var exception = Assertions.assertThrows(CancelException.class, () -> securityThresholdChecker.checkSecurityRiskThreshold(repoPath, new ArrayList<>(List.of(repoPath))));
@@ -127,7 +121,6 @@ public class SecurityThresholdCheckerTests {
         MockGetProperty(repoPath, LOW_RISKS_COUNT, "15");
         MockGetProperty(repoPath, MEDIUM_RISKS_COUNT, "0");
         MockGetProperty(repoPath, HIGH_RISKS_COUNT, "0");
-        MockGetProperty(repoPath, CRITICAL_RISKS_COUNT, "0");
         MockGetProperties(repoPath);
 
         securityThresholdChecker.checkSecurityRiskThreshold(repoPath, new ArrayList<>(List.of(repoPath)));
@@ -147,7 +140,6 @@ public class SecurityThresholdCheckerTests {
         MockGetProperty(repoPath, LOW_RISKS_COUNT, "0");
         MockGetProperty(repoPath, MEDIUM_RISKS_COUNT, "15");
         MockGetProperty(repoPath, HIGH_RISKS_COUNT, "0");
-        MockGetProperty(repoPath, CRITICAL_RISKS_COUNT, "0");
         MockGetProperties(repoPath);
 
         var exception = Assertions.assertThrows(CancelException.class, () -> securityThresholdChecker.checkSecurityRiskThreshold(repoPath, new ArrayList<>(List.of(repoPath))));
@@ -169,7 +161,6 @@ public class SecurityThresholdCheckerTests {
         MockGetProperty(repoPath, LOW_RISKS_COUNT, "15");
         MockGetProperty(repoPath, MEDIUM_RISKS_COUNT, "15");
         MockGetProperty(repoPath, HIGH_RISKS_COUNT, "0");
-        MockGetProperty(repoPath, CRITICAL_RISKS_COUNT, "0");
         MockGetProperties(repoPath);
 
         securityThresholdChecker.checkSecurityRiskThreshold(repoPath, new ArrayList<>(List.of(repoPath)));
@@ -189,49 +180,6 @@ public class SecurityThresholdCheckerTests {
         MockGetProperty(repoPath, LOW_RISKS_COUNT, "0");
         MockGetProperty(repoPath, MEDIUM_RISKS_COUNT, "0");
         MockGetProperty(repoPath, HIGH_RISKS_COUNT, "15");
-        MockGetProperty(repoPath, CRITICAL_RISKS_COUNT, "0");
-        MockGetProperties(repoPath);
-
-        var exception = Assertions.assertThrows(CancelException.class, () -> securityThresholdChecker.checkSecurityRiskThreshold(repoPath, new ArrayList<>(List.of(repoPath))));
-
-        Assertions.assertEquals(exception.getErrorCode(), 403);
-
-        loggerNeverCalled();
-    }
-
-    @Test
-    @DisplayName("Validate security risk threshold - critical risks")
-    public void validateSecurityRiskThresholdCriticalRisks() {
-        var securityThresholdChecker = _injector.getInstance(SecurityThresholdChecker.class);
-
-        SetSecurityRiskThreshold("critical");
-
-        var repoPath = CreateRepoPath();
-        MockGetProperty(repoPath, TOTAL_RISKS_COUNT, "45");
-        MockGetProperty(repoPath, LOW_RISKS_COUNT, "15");
-        MockGetProperty(repoPath, MEDIUM_RISKS_COUNT, "15");
-        MockGetProperty(repoPath, HIGH_RISKS_COUNT, "15");
-        MockGetProperty(repoPath, CRITICAL_RISKS_COUNT, "0");
-        MockGetProperties(repoPath);
-
-        securityThresholdChecker.checkSecurityRiskThreshold(repoPath, new ArrayList<>(List.of(repoPath)));
-
-        loggerNeverCalled();
-    }
-
-    @Test
-    @DisplayName("Validate security risk threshold - critical risks blocked")
-    public void validateSecurityRiskThresholdCriticalRisksBlocked() {
-        var securityThresholdChecker = _injector.getInstance(SecurityThresholdChecker.class);
-
-        SetSecurityRiskThreshold("critical");
-
-        var repoPath = CreateRepoPath();
-        MockGetProperty(repoPath, TOTAL_RISKS_COUNT, "15");
-        MockGetProperty(repoPath, LOW_RISKS_COUNT, "0");
-        MockGetProperty(repoPath, MEDIUM_RISKS_COUNT, "0");
-        MockGetProperty(repoPath, HIGH_RISKS_COUNT, "0");
-        MockGetProperty(repoPath, CRITICAL_RISKS_COUNT, "15");
         MockGetProperties(repoPath);
 
         var exception = Assertions.assertThrows(CancelException.class, () -> securityThresholdChecker.checkSecurityRiskThreshold(repoPath, new ArrayList<>(List.of(repoPath))));
@@ -250,11 +198,10 @@ public class SecurityThresholdCheckerTests {
 
         var repoPath = CreateRepoPath();
         MockGetProperty(repoPath, IGNORE_THRESHOLD, "true");
-        MockGetProperty(repoPath, TOTAL_RISKS_COUNT, "60");
+        MockGetProperty(repoPath, TOTAL_RISKS_COUNT, "45");
         MockGetProperty(repoPath, LOW_RISKS_COUNT, "15");
         MockGetProperty(repoPath, MEDIUM_RISKS_COUNT, "15");
         MockGetProperty(repoPath, HIGH_RISKS_COUNT, "15");
-        MockGetProperty(repoPath, CRITICAL_RISKS_COUNT, "15");
         MockGetProperties(repoPath);
 
         securityThresholdChecker.checkSecurityRiskThreshold(repoPath, new ArrayList<>(List.of(repoPath)));
@@ -277,11 +224,10 @@ public class SecurityThresholdCheckerTests {
         var repoPathLocal = CreateRepoPath();
         var repoPathRemote = CreateRepoPath();
         MockGetProperty(repoPathRemote, IGNORE_THRESHOLD, "true");
-        MockGetProperty(repoPathRemote, TOTAL_RISKS_COUNT, "60");
+        MockGetProperty(repoPathRemote, TOTAL_RISKS_COUNT, "45");
         MockGetProperty(repoPathRemote, LOW_RISKS_COUNT, "15");
         MockGetProperty(repoPathRemote, MEDIUM_RISKS_COUNT, "15");
         MockGetProperty(repoPathRemote, HIGH_RISKS_COUNT, "15");
-        MockGetProperty(repoPathRemote, CRITICAL_RISKS_COUNT, "15");
         MockGetProperties(repoPathLocal);
         MockGetProperties(repoPathRemote);
 

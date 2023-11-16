@@ -4,6 +4,5 @@ public enum SecurityRiskThreshold {
     NONE,
     LOW,
     MEDIUM,
-    HIGH,
-    CRITICAL
+    HIGH
 }

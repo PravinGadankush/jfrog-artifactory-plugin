@@ -77,9 +77,6 @@ public class SecurityThresholdChecker {
             case HIGH:
                 checkIfHighRiskThresholdFulfillment(repoPath);
                 break;
-            case CRITICAL:
-                checkIfCriticalRiskThresholdFulfillment(repoPath);
-                break;
         }
     }
 
@@ -90,7 +87,6 @@ public class SecurityThresholdChecker {
 
     private void checkIfLowRiskThresholdFulfillment(RepoPath repoPath) throws CancelException {
         var vulnerabilities = _repositories.getProperty(repoPath, TOTAL_RISKS_COUNT);
-
         if (Integer.parseInt(vulnerabilities) > 0) {
             throw new CancelException(getCancelExceptionMessage(repoPath), 403);
         }
@@ -99,26 +95,16 @@ public class SecurityThresholdChecker {
     private void checkIfMediumRiskThresholdFulfillment(RepoPath repoPath) throws CancelException {
         var mediumRisk = _repositories.getProperty(repoPath, MEDIUM_RISKS_COUNT);
         var highRisk = _repositories.getProperty(repoPath, HIGH_RISKS_COUNT);
-        var criticalRisk = _repositories.getProperty(repoPath, CRITICAL_RISKS_COUNT);
 
-        if (Integer.parseInt(mediumRisk) > 0 || Integer.parseInt(highRisk) > 0 || Integer.parseInt(criticalRisk) > 0) {
+        if (Integer.parseInt(mediumRisk) > 0 || Integer.parseInt(highRisk) > 0) {
             throw new CancelException(getCancelExceptionMessage(repoPath), 403);
         }
     }
 
     private void checkIfHighRiskThresholdFulfillment(RepoPath repoPath) throws CancelException {
         var highRisk = _repositories.getProperty(repoPath, HIGH_RISKS_COUNT);
-        var criticalRisk = _repositories.getProperty(repoPath, CRITICAL_RISKS_COUNT);
 
-        if (Integer.parseInt(highRisk) > 0 || Integer.parseInt(criticalRisk) > 0) {
-            throw new CancelException(getCancelExceptionMessage(repoPath), 403);
-        }
-    }
-
-    private void checkIfCriticalRiskThresholdFulfillment(RepoPath repoPath) throws CancelException {
-        var criticalRisk = _repositories.getProperty(repoPath, CRITICAL_RISKS_COUNT);
-
-        if (Integer.parseInt(criticalRisk) > 0) {
+        if (Integer.parseInt(highRisk) > 0) {
             throw new CancelException(getCancelExceptionMessage(repoPath), 403);
         }
     }

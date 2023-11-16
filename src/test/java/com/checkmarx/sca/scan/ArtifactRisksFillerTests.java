@@ -91,7 +91,7 @@ public class ArtifactRisksFillerTests {
         ArtifactRisksFiller.addArtifactRisks(_mainRepoPath, new ArrayList<>(List.of(_mainRepoPath)));
 
         withoutWarningsAndErrors();
-        Mockito.verify(_repositories, times(9)).setProperty(isA(RepoPath.class), isA(String.class), isA(String.class));
+        Mockito.verify(_repositories, times(8)).setProperty(isA(RepoPath.class), isA(String.class), isA(String.class));
     }
 
     @DisplayName("Check artifact with success - two repositories repository")
@@ -118,7 +118,7 @@ public class ArtifactRisksFillerTests {
 
         Assertions.assertTrue(result);
         withoutWarningsAndErrors();
-        Mockito.verify(_repositories, times(18)).setProperty(isA(RepoPath.class), isA(String.class), isA(String.class));
+        Mockito.verify(_repositories, times(16)).setProperty(isA(RepoPath.class), isA(String.class), isA(String.class));
         Mockito.verify(_scaHttpClient, times(1)).getArtifactInformation(isA(String.class), isA(String.class), isA(String.class));
         Mockito.verify(_scaHttpClient, times(1)).getRiskAggregationOfArtifact(isA(String.class), isA(String.class), isA(String.class));
     }
@@ -151,7 +151,7 @@ public class ArtifactRisksFillerTests {
 
         Assertions.assertTrue(result);
         withoutWarningsAndErrors();
-        Mockito.verify(_repositories, times(18)).setProperty(isA(RepoPath.class), isA(String.class), isA(String.class));
+        Mockito.verify(_repositories, times(16)).setProperty(isA(RepoPath.class), isA(String.class), isA(String.class));
         Mockito.verify(_scaHttpClient, times(1)).getArtifactInformation(isA(String.class), isA(String.class), isA(String.class));
         Mockito.verify(_scaHttpClient, times(1)).getRiskAggregationOfArtifact(isA(String.class), isA(String.class), isA(String.class));
     }
@@ -223,7 +223,7 @@ public class ArtifactRisksFillerTests {
 
         Assertions.assertTrue(result);
         withoutWarningsAndErrors();
-        Mockito.verify(_repositories, times(9)).setProperty(isA(RepoPath.class), isA(String.class), isA(String.class));
+        Mockito.verify(_repositories, times(8)).setProperty(isA(RepoPath.class), isA(String.class), isA(String.class));
     }
 
 
@@ -380,7 +380,6 @@ public class ArtifactRisksFillerTests {
         when(properties.containsKey(PropertiesConstants.LOW_RISKS_COUNT)).thenReturn(true);
         when(properties.containsKey(PropertiesConstants.MEDIUM_RISKS_COUNT)).thenReturn(true);
         when(properties.containsKey(PropertiesConstants.HIGH_RISKS_COUNT)).thenReturn(true);
-        when(properties.containsKey(PropertiesConstants.CRITICAL_RISKS_COUNT)).thenReturn(true);
         when(properties.containsKey(PropertiesConstants.RISK_SCORE)).thenReturn(true);
         when(properties.containsKey(PropertiesConstants.RISK_LEVEL)).thenReturn(true);
         when(properties.containsKey(PropertiesConstants.LAST_SCAN)).thenReturn(true);

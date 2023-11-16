@@ -6,7 +6,6 @@ public class PropertiesConstants {
     public static final String LOW_RISKS_COUNT = "CxSCA.LowSeverityRisks";
     public static final String MEDIUM_RISKS_COUNT = "CxSCA.MediumSeverityRisks";
     public static final String HIGH_RISKS_COUNT = "CxSCA.HighSeverityRisks";
-    public static final String CRITICAL_RISKS_COUNT = "CxSCA.CriticalSeverityRisks";
     public static final String RISK_SCORE = "CxSCA.RiskScore";
     public static final String RISK_LEVEL = "CxSCA.RiskLevel";
     public static final String LAST_SCAN = "CxSCA.LastScanned";

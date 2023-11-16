@@ -138,7 +138,6 @@ public class ArtifactRisksFiller {
                 && properties.containsKey(PropertiesConstants.LOW_RISKS_COUNT)
                 && properties.containsKey(PropertiesConstants.MEDIUM_RISKS_COUNT)
                 && properties.containsKey(PropertiesConstants.HIGH_RISKS_COUNT)
-                && properties.containsKey(PropertiesConstants.CRITICAL_RISKS_COUNT)
                 && properties.containsKey(PropertiesConstants.RISK_SCORE)
                 && properties.containsKey(PropertiesConstants.RISK_LEVEL)
                 && properties.containsKey(PropertiesConstants.LAST_SCAN);
@@ -212,7 +211,6 @@ public class ArtifactRisksFiller {
         _repositories.setProperty(repoPath, PropertiesConstants.LOW_RISKS_COUNT, String.valueOf(vulnerabilitiesAggregation.getLowRiskCount()));
         _repositories.setProperty(repoPath, PropertiesConstants.MEDIUM_RISKS_COUNT, String.valueOf(vulnerabilitiesAggregation.getMediumRiskCount()));
         _repositories.setProperty(repoPath, PropertiesConstants.HIGH_RISKS_COUNT, String.valueOf(vulnerabilitiesAggregation.getHighRiskCount()));
-        _repositories.setProperty(repoPath, PropertiesConstants.CRITICAL_RISKS_COUNT, String.valueOf(vulnerabilitiesAggregation.getCriticalRiskCount()));
         _repositories.setProperty(repoPath, PropertiesConstants.RISK_SCORE, String.valueOf(vulnerabilitiesAggregation.getMaxRiskScore()));
         _repositories.setProperty(repoPath, PropertiesConstants.RISK_LEVEL, vulnerabilitiesAggregation.getMaxRiskSeverity());
         _repositories.setProperty(repoPath, PropertiesConstants.LAST_SCAN, Instant.now().toString());
