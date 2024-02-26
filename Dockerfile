@@ -39,8 +39,6 @@ FROM 882696877841.dkr.ecr.eu-central-1.amazonaws.com/source-resolver:master-base
 
 RUN apt update && apt install -y docker.io iputils-ping
 
-RUN rm /usr/share/maven/conf/settings.xml
-
 RUN gem install cocoapods-art
 
 RUN npm install -g --save bower-art-resolver
