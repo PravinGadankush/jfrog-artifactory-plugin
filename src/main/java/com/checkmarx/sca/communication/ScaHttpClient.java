@@ -175,7 +175,7 @@ public class ScaHttpClient {
 
     private HttpRequest getSuggestPrivatePackageRequest(ArtifactId artifactId) throws CancelException {
 
-        var body = format("[{\"name\":\"%s\",\"packageManager\":\"%s\",\"version\":\"%s\",\"origin\":\"PrivateArtifactory\"}]",
+        var body = format("[{\"name\":\"%s\",\"packageManager\":\"%s\",\"version\":\"%s\",\"resolvedBy\":\"PrivateArtifactory\"}]",
                 artifactId.Name, artifactId.PackageType, artifactId.Version);
 
         if (_accessControlClient == null) {

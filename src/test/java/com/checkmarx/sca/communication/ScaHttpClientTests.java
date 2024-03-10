@@ -219,7 +219,7 @@ public class ScaHttpClientTests {
         this.wireMockServer.stubFor(
                 WireMock.post("/private-dependencies-repository/dependencies")
                         .withHeader("cxorigin", matching("JFrog .*"))
-                        .withRequestBody(containing("[{\"name\":\"lodash\",\"packageManager\":\"Npm\",\"version\":\"0.2.1\",\"origin\":\"PrivateArtifactory\"}]"))
+                        .withRequestBody(containing("[{\"name\":\"lodash\",\"packageManager\":\"Npm\",\"version\":\"0.2.1\",\"resolvedBy\":\"PrivateArtifactory\"}]"))
                         .willReturn(ok())
         );
 
@@ -239,7 +239,7 @@ public class ScaHttpClientTests {
         this.wireMockServer.stubFor(
                 WireMock.post("/private-dependencies-repository/dependencies")
                         .withHeader("cxorigin", matching("JFrog .*"))
-                        .withRequestBody(containing("[{\"name\":\"lodash\",\"packageManager\":\"Npm\",\"version\":\"0.2.1\",\"origin\":\"PrivateArtifactory\"}]"))
+                        .withRequestBody(containing("[{\"name\":\"lodash\",\"packageManager\":\"Npm\",\"version\":\"0.2.1\",\"resolvedBy\":\"PrivateArtifactory\"}]"))
                         .willReturn(aResponse().withStatus(500))
         );
 

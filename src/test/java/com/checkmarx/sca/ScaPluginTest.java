@@ -233,7 +233,7 @@ public class ScaPluginTest {
         wireMockServer.start();
         wireMockServer.stubFor(
                 WireMock.post("/private-dependencies-repository/dependencies")
-                        .withRequestBody(containing("[{\"name\":\"lodash\",\"packageManager\":\"npm\",\"version\":\"0.2.1\",\"origin\":\"PrivateArtifactory\"}]"))
+                        .withRequestBody(containing("[{\"name\":\"lodash\",\"packageManager\":\"npm\",\"version\":\"0.2.1\",\"resolvedBy\":\"PrivateArtifactory\"}]"))
                         .willReturn(ok())
         );
 
